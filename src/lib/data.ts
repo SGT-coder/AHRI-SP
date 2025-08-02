@@ -50,20 +50,17 @@ export const initialSubmissions: Submission[] = [
       "objectives": [
         {
           "objective": "የሳይንሳዊ መረጃዎች፣ የፈጠራ ፣አዳዲስ እና የተሻሻሉ ምርቶች መሳሪያዎች እና ዘዴዎች ማሳደግ፣ ማምረት እና ማሸጋገር",
-          "objectiveWeight": "100",
+          "weight": "100",
           "strategicActions": [
             {
               "action": "በሽታን መዋጋት",
-              "weight": "100"
+              "weight": "100",
+               "metrics": [{ "metric": "የበሽታ መቀነስ", "weight": "50" }],
+               "mainTasks": [{ "task": "ሙከራ ማካሄድ", "weight": "50", "target": "1000 ተሳታፊዎች" }]
             }
           ]
         }
       ],
-      "metric": "የበሽታ መቀነስ",
-      "mainTask": "ሙከራ ማካሄድ",
-      "mainTaskTarget": "1000 ተሳታፊዎች",
-      "metricWeight": "50",
-      "mainTaskWeight": "50",
       "executingBody": "ክሊኒካል ሙከራ ዳይሬክቶሬት",
       "executionTime": "1ኛ ሩብ ዓመት",
       "budgetSource": "መንግስት",
@@ -83,20 +80,17 @@ export const initialSubmissions: Submission[] = [
        "objectives": [
         {
           "objective": "በምርምር ውስጥ የማህበረሰቡን ተሳትፎ ማሳደግ",
-          "objectiveWeight": "100",
+          "weight": "100",
           "strategicActions": [
             {
               "action": "የጤና ግንዛቤ ማስጨበጫ ዘመቻዎችን ማካሄድ",
-              "weight": "100"
+              "weight": "100",
+              "metrics": [{ "metric": "የዘመቻ ተደራሽነት", "weight": "60" }],
+              "mainTasks": [{ "task": "ወርክሾፖችን ማደራጀት", "weight": "40", "target": "5 ወርክሾፖች" }]
             }
           ]
         }
       ],
-      "metric": "የዘመቻ ተደራሽነት",
-      "mainTask": "ወርክሾፖችን ማደራጀት",
-      "mainTaskTarget": "5 ወርክሾፖች",
-      "metricWeight": "60",
-      "mainTaskWeight": "40",
       "executingBody": "የህዝብ ግንኙነትና ኮሙኒኬሽን",
       "executionTime": "2ኛ ሩብ ዓመት",
       "budgetSource": "ግራንት",
@@ -115,24 +109,23 @@ export const initialSubmissions: Submission[] = [
       "objectives": [
         {
           "objective": "ተቋማዊ መሠረተ ልማትን ማሻሻል",
-          "objectiveWeight": "100",
+          "weight": "100",
           "strategicActions": [
             {
               "action": "አዲስ መሳሪያዎችን መግጠም",
-              "weight": "60"
+              "weight": "60",
+              "metrics": [{ "metric": "የተከናወኑ ምርመራዎች ብዛት", "weight": "70" }],
+              "mainTasks": [{ "task": "የመሳሪያ ግዥ", "weight": "30", "target": "3 አዳዲስ መሳሪያዎች" }]
             },
             {
                 "action": "የሰራተኞች ስልጠና",
-                "weight": "40"
+                "weight": "40",
+                 "metrics": [{ "metric": "የሰለጠኑ ሰራተኞች ብዛት", "weight": "50" }],
+                 "mainTasks": [{ "task": "ስልጠና ማዘጋጀት", "weight": "50", "target": "20 ሰራተኞች" }]
             }
           ]
         }
       ],
-      "metric": "የተከናወኑ ምርመራዎች ብዛት",
-      "mainTask": "የመሳሪያ ግዥ",
-      "mainTaskTarget": "3 አዳዲስ መሳሪያዎች",
-      "metricWeight": "70",
-      "mainTaskWeight": "30",
       "executingBody": "ላብራቶሪ አስተዳደር ዳይሬክቶሬት",
       "executionTime": "4ኛ ሩብ ዓመት",
       "budgetSource": "መንግስት",

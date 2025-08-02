@@ -3,19 +3,52 @@ import * as z from "zod";
 
 const weightSchema = z.string()
     .min(1, "ክብደት መግባት አለበት።")
-    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-        message: "ክብደት ቁጥር መሆን አለበት።",
+    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, {
+        message: "ክብደት በ0 እና 100 መካከል ያለ ቁጥር መሆን አለበት።",
     });
 
-const strategicActionSchema = z.object({
-    action: z.string().min(1, "እርምጃ መግባት አለበት።"),
+const mainTaskSchema = z.object({
+    task: z.string().min(1, "የተግባር መግለጫ ያስፈልጋል።"),
     weight: weightSchema,
+    target: z.string().min(1, "ዒላማ ያስፈልጋል።"),
+});
+
+const metricSchema = z.object({
+    metric: z.string().min(1, "የመለኪያ መግለጫ ያስፈልጋል።"),
+    weight: weightSchema,
+});
+
+const strategicActionSchema = z.object({
+    action: z.string().min(1, "የእርምጃ መግለጫ ያስፈልጋል።"),
+    weight: weightSchema,
+    metrics: z.array(metricSchema).min(1, "ቢያንስ አንድ መለኪያ ያስፈልጋል።"),
+    mainTasks: z.array(mainTaskSchema).min(1, "ቢያንስ አንድ ዋና ተግባር ያስፈልጋል።"),
+}).superRefine((data, ctx) => {
+    const totalWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) +
+                        data.mainTasks.reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
+    
+    if (Math.abs(totalWeight - 100) > 0.01) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `የመለኪያዎች እና የተግባሮች ክብደት ድምር 100 መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)} ነው።`,
+            path: ['metrics'],
+        });
+    }
 });
 
 const objectiveSchema = z.object({
     objective: z.string({ required_error: "ዓላማ መምረጥ ያስፈልጋል" }).min(1, "ዓላማ መምረጥ ያስፈልጋል"),
-    objectiveWeight: weightSchema,
+    weight: weightSchema,
     strategicActions: z.array(strategicActionSchema).min(1, "ቢያንስ አንድ ስትራቴጂክ እርምጃ ያስፈልጋል።"),
+}).superRefine((data, ctx) => {
+    const totalWeight = data.strategicActions.reduce((acc, sa) => acc + (parseFloat(sa.weight) || 0), 0);
+    if (Math.abs(totalWeight - 100) > 0.01) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `የስትራቴጂክ እርምጃዎች ክብደት ድምር 100 መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)} ነው።`,
+            path: ['strategicActions'],
+        });
+    }
 });
 
 
@@ -24,12 +57,9 @@ export const strategicPlanSchema = z.object({
     projectTitle: z.string({ required_error: "የእቅድ ርዕስ ያስፈልጋል" }).min(1, "የእቅድ ርዕስ ያስፈልጋል"),
     department: z.string({ required_error: "ዲፓርትመንት መምረጥ ያስፈልጋል" }).min(1, "ዲፓርትመንት መምረጥ ያስፈልጋል"),
     goal: z.string({ required_error: "ግብ መምረጥ ያስፈልጋል" }).min(1, "ግብ መምረጥ ያስፈልጋል"),
+    
     objectives: z.array(objectiveSchema).min(1, "ቢያንስ አንድ ዓላማ ያስፈልጋል።"),
-    metric: z.string({ required_error: "መለኪያ ያስፈልጋል" }).min(1, "መለኪያ ያስፈልጋል"),
-    mainTask: z.string({ required_error: "ዋና ተግባር ያስፈልጋል" }).min(1, "ዋና ተግባር ያስፈልጋል"),
-    mainTaskTarget: z.string({ required_error: "የዋና ተግባር ዒላማ ያስፈልጋል" }).min(1, "የዋና ተግባር ዒላማ ያስፈልጋል"),
-    metricWeight: weightSchema,
-    mainTaskWeight: weightSchema,
+    
     executingBody: z.string({ required_error: "ፈጻሚ አካል መምረጥ ያስፈልጋል" }).min(1, "ፈጻሚ አካል መምረጥ ያስፈልጋል"),
     executionTime: z.string({ required_error: "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል" }).min(1, "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል"),
     budgetSource: z.string({ required_error: "የበጀት ምንጭ መምረጥ ያስፈልጋል" }).min(1, "የበጀት ምንጭ መምረጥ ያስፈልጋል"),
@@ -40,62 +70,28 @@ export const strategicPlanSchema = z.object({
 }).superRefine((data, ctx) => {
     if (data.budgetSource === 'መንግስት') {
         if (!data.governmentBudgetAmount || data.governmentBudgetAmount.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "ከመንግስት በጀት መጠን መግባት አለበት።",
-                path: ['governmentBudgetAmount'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከመንግስት በጀት መጠን መግባት አለበት።", path: ['governmentBudgetAmount'] });
         }
         if (!data.governmentBudgetCode || data.governmentBudgetCode.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "ከመንግስት በጀት ኮድ መመረጥ አለበት።",
-                path: ['governmentBudgetCode'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከመንግስት በጀት ኮድ መመረጥ አለበት።", path: ['governmentBudgetCode'] });
         }
     }
     if (data.budgetSource === 'ግራንት') {
         if (!data.grantBudgetAmount || data.grantBudgetAmount.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "ከግራንት በጀት መጠን መግባት አለበት።",
-                path: ['grantBudgetAmount'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከግራንት በጀት መጠን መግባት አለበት።", path: ['grantBudgetAmount'] });
         }
     }
     if (data.budgetSource === 'ኢስዲጂ') {
         if (!data.sdgBudgetAmount || data.sdgBudgetAmount.trim() === '') {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "ከኢስ ዲ ጂ በጀት መጠን መግባት አለበት።",
-                path: ['sdgBudgetAmount'],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከኢስ ዲ ጂ በጀት መጠን መግባት አለበት።", path: ['sdgBudgetAmount'] });
         }
     }
 
-    const totalObjectiveWeight = data.objectives.reduce((acc, obj) => {
-        return acc + (parseFloat(obj.objectiveWeight) || 0);
-    }, 0);
-
-    if (Math.abs(totalObjectiveWeight - 100) > 0.01) { // Using a small tolerance for floating point math
+    const totalObjectiveWeight = data.objectives.reduce((acc, obj) => acc + (parseFloat(obj.weight) || 0), 0);
+    if (Math.abs(totalObjectiveWeight - 100) > 0.01) {
          ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `የሁሉም ዓላማ ክብደቶች ድምር 100 መሆን አለበት። የአሁኑ ድምር ${totalObjectiveWeight} ነው።`,
-            path: ['objectives'],
-        });
-    }
-
-    const totalStrategicActionWeight = data.objectives.reduce((totalAcc, obj) => {
-        const objectiveActionWeight = obj.strategicActions.reduce((actionAcc, action) => {
-            return actionAcc + (parseFloat(action.weight) || 0);
-        }, 0);
-        return totalAcc + objectiveActionWeight;
-    }, 0);
-
-    if (Math.abs(totalStrategicActionWeight - 100) > 0.01) { // Using a small tolerance for floating point math
-         ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `የሁሉም ስትራቴጂክ እርምጃ ክብደቶች ድምር 100 መሆን አለበት። የአሁኑ ድምር ${totalStrategicActionWeight} ነው።`,
+            message: `የሁሉም ዓላማ ክብደቶች ድምር 100 መሆን አለበት። የአሁኑ ድምር ${totalObjectiveWeight.toFixed(2)} ነው።`,
             path: ['objectives'],
         });
     }

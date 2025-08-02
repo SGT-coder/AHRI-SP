@@ -14,13 +14,6 @@ export interface Submission extends StrategicPlanFormValues {
   submittedAt: string;
   lastModifiedAt: string;
   comments?: string;
-
-  // These fields are deprecated in the new structure but might exist in old data.
-  // We keep them optional to avoid breaking old records.
-  objective?: string;
-  strategicAction?: string;
-  objectiveWeight?: string;
-  strategicActionWeight?: string;
 }
 
 export type Role = "User" | "Approver" | "Admin" | null;

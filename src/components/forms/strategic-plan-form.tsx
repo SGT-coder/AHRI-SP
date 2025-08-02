@@ -3,8 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
-import { Loader2, PlusCircle, Trash2, CalculatorIcon } from "lucide-react";
+import { useForm, useFieldArray, Control } from "react-hook-form";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,26 +36,27 @@ import {
 } from "@/lib/options";
 import type { Submission } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreativeCalculator } from "@/components/forms/creative-calculator";
+import { Separator } from "@/components/ui/separator";
+
+const defaultObjective = {
+  objective: "",
+  weight: "",
+  strategicActions: [
+    {
+      action: "",
+      weight: "",
+      metrics: [{ metric: "", weight: "" }],
+      mainTasks: [{ task: "", weight: "", target: "" }],
+    },
+  ],
+};
 
 const defaultFormValues: StrategicPlanFormValues = {
     userName: "",
     projectTitle: "",
     department: "",
     goal: "",
-    objectives: [{
-        objective: "",
-        objectiveWeight: "",
-        strategicActions: [{
-            action: "",
-            weight: ""
-        }]
-    }],
-    metric: "",
-    mainTask: "",
-    mainTaskTarget: "",
-    metricWeight: "",
-    mainTaskWeight: "",
+    objectives: [defaultObjective],
     executingBody: "",
     executionTime: "",
     budgetSource: "",
@@ -73,14 +74,10 @@ interface StrategicPlanFormProps {
 }
 
 export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly = false }: StrategicPlanFormProps) {
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   
   const form = useForm<StrategicPlanFormValues>({
     resolver: zodResolver(strategicPlanSchema),
-    defaultValues: submission && submission.objectives ? {
-        ...defaultFormValues,
-        ...submission,
-    } : defaultFormValues,
+    defaultValues: submission ? submission : defaultFormValues,
   });
 
   const { fields: objectiveFields, append: appendObjective, remove: removeObjective } = useFieldArray({
@@ -88,16 +85,8 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
     name: "objectives",
   });
 
-
   useEffect(() => {
-    if (submission) {
-      form.reset(submission && submission.objectives ? {
-        ...defaultFormValues,
-        ...submission,
-      } : defaultFormValues);
-    } else {
-      form.reset(defaultFormValues);
-    }
+    form.reset(submission || defaultFormValues);
   }, [submission, form]);
 
   const budgetSource = form.watch("budgetSource");
@@ -119,30 +108,21 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
            <fieldset disabled={isSubmitting || isReadOnly} className="space-y-6 group">
+
+            {/* General Info Card */}
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                            <CardTitle className="text-3xl font-bold text-center font-headline">{formTitle}</CardTitle>
-                            <CardDescription className="text-center text-lg">
-                                {formDescription}
-                            </CardDescription>
-                        </div>
-                        {!isReadOnly && (
-                            <Button type="button" variant="outline" size="icon" onClick={() => setIsCalculatorOpen(true)} title="Creative Calculator">
-                                <CalculatorIcon className="h-5 w-5" />
-                            </Button>
-                        )}
-                    </div>
+                    <CardTitle className="text-3xl font-bold text-center font-headline">{formTitle}</CardTitle>
+                    <CardDescription className="text-center text-lg">{formDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8 group-disabled:opacity-50">
                     <Card>
-                        <CardHeader><CardTitle className="text-xl">አጠቃላይ መረጃ</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-xl">1. አጠቃላይ መረጃ</CardTitle></CardHeader>
                         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormField control={form.control} name="userName" render={({ field }) => (
+                           <FormField control={form.control} name="userName" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>የአስገባው ሙሉ ስም</FormLabel>
                                     <FormControl><Input placeholder="ሙሉ ስምዎን ያስገቡ" {...field} /></FormControl>
@@ -160,12 +140,8 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                                 <FormItem>
                                     <FormLabel>ዲፓርትመንት</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value || ''}>
-                                        <FormControl>
-                                            <SelectTrigger><SelectValue placeholder="ዲፓርትመንት ይምረጡ" /></SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {departmentOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                        </SelectContent>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="ዲፓርትመንት ይምረጡ" /></SelectTrigger></FormControl>
+                                        <SelectContent>{departmentOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
@@ -174,12 +150,8 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                                 <FormItem>
                                     <FormLabel>ግብ</FormLabel>
                                     <Select onValueChange={field.onChange} value={field.value || ''}>
-                                        <FormControl>
-                                            <SelectTrigger><SelectValue placeholder="ግብ ይምረጡ" /></SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {goalOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                        </SelectContent>
+                                        <FormControl><SelectTrigger><SelectValue placeholder="ግብ ይምረጡ" /></SelectTrigger></FormControl>
+                                        <SelectContent>{goalOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
                                     </Select>
                                     <FormMessage />
                                 </FormItem>
@@ -187,162 +159,75 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                         </CardContent>
                     </Card>
 
+                    {/* Dynamic Objectives Section */}
                     <Card>
-                        <CardHeader><CardTitle className="text-xl">ዓላማዎች እና ስትራቴጂካዊ እርምጃዎች</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-xl">2. ዓላማዎች እና ስትራቴጂካዊ እርምጃዎች</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                            {objectiveFields.map((field, index) => (
-                               <ObjectiveFieldArray key={field.id} form={form} objectiveIndex={index} removeObjective={removeObjective} isReadOnly={isReadOnly} />
+                               <ObjectiveField
+                                   key={field.id}
+                                   control={form.control}
+                                   objectiveIndex={index}
+                                   removeObjective={removeObjective}
+                                   isReadOnly={isReadOnly} />
                            ))}
                            {!isReadOnly && (
-                                <Button type="button" variant="outline" onClick={() => appendObjective({ objective: "", objectiveWeight: "", strategicActions: [{ action: "", weight: ""}]})}>
+                                <Button type="button" variant="outline" onClick={() => appendObjective(defaultObjective)}>
                                     <PlusCircle className="mr-2 h-4 w-4" /> ዓላማ ጨምር
                                 </Button>
+                           )}
+                           {form.formState.errors.objectives && (
+                             <FormMessage>{form.formState.errors.objectives.message}</FormMessage>
                            )}
                         </CardContent>
                     </Card>
 
+                    {/* Performance and Budget Card */}
                     <Card>
-                        <CardHeader><CardTitle className="text-xl">መለኪያዎች እና ተግባራት</CardTitle></CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="metric" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>መለኪያ</FormLabel>
-                                        <FormControl><Input placeholder="መለኪያ ያስገቡ" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="metricWeight" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>የመለኪያ ክብደት</FormLabel>
-                                        <FormControl><Input type="number" placeholder="የመለኪያ ክብደት ያስገቡ" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <FormField control={form.control} name="mainTask" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>ዋና ተግባር</FormLabel>
-                                        <FormControl><Input placeholder="ዋና ተግባር ያስገቡ" {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-                                 <FormField control={form.control} name="mainTaskWeight" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>የዋና ተግባር ክብደት</FormLabel>
-                                   <FormControl><Input type="number" placeholder="የተግባር ክብደት ያስገቡ" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                            </div>
-                             <FormField control={form.control} name="mainTaskTarget" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>የዋና ተግባር ዒላማ</FormLabel>
-                                    <FormControl><Input placeholder="የዋና ተግባር ዒላማ ያስገቡ" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        </CardContent>
-                    </Card>
-                    
-                    
-                    <Card>
-                        <CardHeader><CardTitle className="text-xl">አፈጻጸም እና በጀት</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-xl">2.2 አፈጻጸም እና በጀት</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <FormField control={form.control} name="executingBody" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>ፈጻሚ አካል</FormLabel>
+                                    <FormItem><FormLabel>ፈጻሚ አካል</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value || ''}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="ፈጻሚ አካል ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                {executingBodyOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
+                                            <SelectContent>{executingBodyOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="executionTime" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>የሚከናወንበት ጊዜ</FormLabel>
+                                    <FormItem><FormLabel>የሚከናወንበት ጊዜ</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value || ''}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="የሚከናወንበትን ጊዜ ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                {executionTimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
+                                            <SelectContent>{executionTimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
                                 )} />
                                 <FormField control={form.control} name="budgetSource" render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>በጀት ምንጭ</FormLabel>
+                                    <FormItem><FormLabel>በጀት ምንጭ</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value || ''}>
                                             <FormControl><SelectTrigger><SelectValue placeholder="የበጀት ምንጭ ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>
-                                                {budgetSourceOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
+                                            <SelectContent>{budgetSourceOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                                        </Select><FormMessage /></FormItem>
                                 )} />
                             </div>
                             
                             {budgetSource && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
-                                    {budgetSource === 'መንግስት' && (
-                                        <>
-                                            <FormField control={form.control} name="governmentBudgetAmount" render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>ከመንግስት በጀት በብር</FormLabel>
-                                                    <FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )} />
-                                            <FormField control={form.control} name="governmentBudgetCode" render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>ከመንግስት በጀት ኮድ</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder="ኮድ ይምረጡ" /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {govBudgetCodeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )} />
-                                        </>
-                                    )}
-                                    {budgetSource === 'ግራንት' && (
-                                        <FormField control={form.control} name="grantBudgetAmount" render={({ field }) => (
-                                            <FormItem className="md:col-span-1">
-                                                <FormLabel>ከግራንት በጀት በብር</FormLabel>
-                                                <FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                    )}
-                                    {budgetSource === 'ኢስዲጂ' && (
-                                        <FormField control={form.control} name="sdgBudgetAmount" render={({ field }) => (
-                                            <FormItem className="md:col-span-1">
-                                                <FormLabel>ከኢስ ዲ ጂ በጀት በብር</FormLabel>
-                                                <FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                    )}
+                                    {budgetSource === 'መንግስት' && (<>
+                                        <FormField control={form.control} name="governmentBudgetAmount" render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="governmentBudgetCode" render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት ኮድ</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="ኮድ ይምረጡ" /></SelectTrigger></FormControl><SelectContent>{govBudgetCodeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                    </>)}
+                                    {budgetSource === 'ግራንት' && (<FormField control={form.control} name="grantBudgetAmount" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከግራንት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                                    {budgetSource === 'ኢስዲጂ' && (<FormField control={form.control} name="sdgBudgetAmount" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከኢስ ዲ ጂ በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
                                 </div>
                             )}
                         </CardContent>
                     </Card>
-
                 </CardContent>
+
+                {/* Footer and Submit */}
                 <CardFooter className="flex flex-col items-stretch gap-4 p-6">
                     {formErrors && (
-                        <Alert variant="destructive">
-                            <AlertDescription>{formErrors}</AlertDescription>
-                        </Alert>
+                        <Alert variant="destructive"><AlertDescription>{formErrors}</AlertDescription></Alert>
                     )}
                     <div className="flex justify-end gap-4">
                         {!submission && <Button type="button" variant="ghost" onClick={handleReset} disabled={isSubmitting || isReadOnly}>አጽዳ</Button>}
@@ -352,121 +237,126 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                     </div>
                 </CardFooter>
             </Card>
-            </fieldset>
+           </fieldset>
         </form>
-        </Form>
-        <CreativeCalculator 
-            isOpen={isCalculatorOpen}
-            onOpenChange={setIsCalculatorOpen}
-            form={form}
-        />
+      </Form>
     </div>
   );
 }
 
+// --- Sub-components for Field Arrays ---
 
-function ObjectiveFieldArray({ form, objectiveIndex, removeObjective, isReadOnly }: { form: any, objectiveIndex: number, removeObjective: (index: number) => void, isReadOnly?: boolean }) {
-    const { fields, append, remove } = useFieldArray({
-        control: form.control,
+const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, removeObjective: (index: number) => void, isReadOnly?: boolean }) => {
+    const { fields: strategicActionFields, append, remove } = useFieldArray({
+        control,
         name: `objectives.${objectiveIndex}.strategicActions`,
     });
 
     return (
-        <div className="p-4 border rounded-lg space-y-4 relative bg-slate-50">
+        <div className="p-4 border rounded-lg space-y-4 relative bg-slate-50/50">
             {!isReadOnly && (
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeObjective(objectiveIndex)}
-                >
+                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => removeObjective(objectiveIndex)}>
                     <Trash2 className="h-4 w-4" />
                 </Button>
             )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                 <FormField
-                    control={form.control}
-                    name={`objectives.${objectiveIndex}.objective`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>ዓላማ</FormLabel>
-                           <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="ዓላማ ይምረጡ" /></SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {objectiveOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name={`objectives.${objectiveIndex}.objectiveWeight`}
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>ዓላማ ክብደት</FormLabel>
-                            <FormControl><Input type="number" placeholder="የዓላማ ክብደት ያስገቡ" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <FormField control={control} name={`objectives.${objectiveIndex}.objective`} render={({ field }) => (
+                    <FormItem><FormLabel>ዓላማ</FormLabel>
+                       <Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="ዓላማ ይምረጡ" /></SelectTrigger></FormControl>
+                           <SelectContent>{objectiveOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                       </Select><FormMessage />
+                    </FormItem>)} />
+                 <FormField control={control} name={`objectives.${objectiveIndex}.weight`} render={({ field }) => (
+                    <FormItem><FormLabel>የዓላማ ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የዓላማ ክብደት ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             
-            <div className="pl-4 border-l-2 ml-2 space-y-4">
-                 <h4 className="font-medium text-sm text-muted-foreground">ስትራቴጂክ እርምጃዎች</h4>
-                {fields.map((actionField, actionIndex) => (
-                    <div key={actionField.id} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 relative">
-                        <FormField
-                            control={form.control}
-                            name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.action`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>እርምጃ</FormLabel>
-                                    <FormControl><Input placeholder="ስትራቴጂክ እርምጃ ያስገቡ" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.weight`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>የእርምጃ ክብደት</FormLabel>
-                                    <FormControl><Input type="number" placeholder="የእርምጃ ክብደት ያስገቡ" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {!isReadOnly && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute -top-2 -right-2 text-muted-foreground hover:text-destructive h-7 w-7"
-                                onClick={() => remove(actionIndex)}
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                        )}
-                    </div>
+            <div className="pl-4 ml-2 space-y-4">
+                 <h4 className="font-medium text-sm text-muted-foreground">2.1. ስትራቴጂክ እርምጃዎች</h4>
+                {strategicActionFields.map((actionField, actionIndex) => (
+                    <StrategicActionField key={actionField.id} control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} remove={remove} isReadOnly={isReadOnly} />
                 ))}
-
                 {!isReadOnly && (
-                    <Button type="button" size="sm" variant="outline" onClick={() => append({ action: "", weight: "" })}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> እርምጃ ጨምር
+                    <Button type="button" size="sm" variant="outline" onClick={() => append({ action: "", weight: "", metrics: [{ metric: "", weight: ""}], mainTasks: [{task: "", weight: "", target: ""}] })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> ስትራቴጂክ እርምጃ ጨምር
                     </Button>
                 )}
             </div>
-
         </div>
     );
 }
-  
 
-    
+const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, remove: (index: number) => void, isReadOnly?: boolean }) => {
+    return (
+        <div className="p-4 border rounded-lg space-y-4 relative bg-white">
+             {!isReadOnly && (
+                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(actionIndex)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.action`} render={({ field }) => (
+                    <FormItem><FormLabel>እርምጃ</FormLabel><FormControl><Input placeholder="ስትራቴጂክ እርምጃ ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.weight`} render={({ field }) => (
+                    <FormItem><FormLabel>የእርምጃ ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የእርምጃ ክብደት ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+            
+            <Separator />
+            
+            <div className="pl-4 ml-2 space-y-4">
+                <h5 className="font-medium text-sm text-muted-foreground">2.1.1 መለኪያዎች እና ተግባራት</h5>
+                <MetricsField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
+                <MainTasksField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
+            </div>
+             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error &&
+                <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error?.root?.message}</FormMessage>
+            }
+        </div>
+    )
+}
+
+const MetricsField = ({ control, objectiveIndex, actionIndex, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, isReadOnly?: boolean }) => {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`,
+    });
+    return (
+        <div className="space-y-2">
+            <h6 className="font-medium text-xs text-muted-foreground">መለኪያዎች</h6>
+            {fields.map((field, metricIndex) => (
+                 <div key={field.id} className="flex items-start gap-2">
+                    <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.metric`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="መለኪያ ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.weight`} render={({ field }) => (<FormItem className="w-48"><FormControl><Input type="number" placeholder="የመለኪያ ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    {!isReadOnly && <Button type="button" variant="ghost" size="icon" onClick={() => remove(metricIndex)}><Trash2 className="h-4 w-4" /></Button>}
+                </div>
+            ))}
+            {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ metric: "", weight: ""})}><PlusCircle className="mr-2 h-4 w-4" /> መለኪያ ጨምር</Button>}
+        </div>
+    )
+}
+
+const MainTasksField = ({ control, objectiveIndex, actionIndex, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, isReadOnly?: boolean }) => {
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks`,
+    });
+    return (
+        <div className="space-y-2">
+            <h6 className="font-medium text-xs text-muted-foreground">ዋና ተግባራት</h6>
+            {fields.map((field, taskIndex) => (
+                 <div key={field.id} className="p-2 border rounded-md space-y-2">
+                    <div className="flex items-start gap-2">
+                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.task`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="ዋና ተግባር ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       {!isReadOnly && <Button type="button" variant="ghost" size="icon" onClick={() => remove(taskIndex)}><Trash2 className="h-4 w-4" /></Button>}
+                    </div>
+                     <div className="flex items-start gap-2">
+                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.weight`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input type="number" placeholder="የተግባር ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="የተግባር ዒላማ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                 </div>
+            ))}
+            {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ task: "", weight: "", target: ""})}><PlusCircle className="mr-2 h-4 w-4" /> ዋና ተግባር ጨምር</Button>}
+        </div>
+    )
+}

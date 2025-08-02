@@ -310,17 +310,6 @@ export async function getSubmissionById(id: string): Promise<{ success: boolean;
     const submission = submissions.find(s => s.id.toLowerCase() === id.toLowerCase());
 
     if (submission) {
-            // Ensure old submissions have the new objectives structure for form compatibility
-        if (!submission.objectives && submission.objective) {
-            submission.objectives = [{
-                objective: submission.objective,
-                objectiveWeight: submission.objectiveWeight || "0",
-                strategicActions: [{
-                    action: submission.strategicAction || "",
-                    weight: submission.strategicActionWeight || "0"
-                }]
-            }];
-        }
         return { success: true, submission };
     } else {
         return { success: false, message: "በዚህ መታወቂያ ምንም ማመልከቻ አልተገኘም።" };
@@ -346,17 +335,6 @@ export async function trackSubmission(data: z.infer<typeof trackSubmissionSchema
     );
 
     if (submission) {
-            // Ensure old submissions have the new objectives structure for form compatibility
-        if (!submission.objectives && submission.objective) {
-            submission.objectives = [{
-                objective: submission.objective,
-                objectiveWeight: submission.objectiveWeight || "0",
-                strategicActions: [{
-                    action: submission.strategicAction || "",
-                    weight: submission.strategicActionWeight || "0"
-                }]
-            }];
-        }
         return { success: true, submission };
     } else {
         return { success: false, message: "በዚህ መታወቂያ እና ስም ምንም ማመልከቻ አልተገኘም። እባክዎ መረጃዎን ያረጋግጡ።" };

@@ -28,6 +28,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface SubmissionViewProps {
   submission: Submission;
@@ -73,7 +81,8 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
   ].reduce((acc, amount) => acc + (Number(amount) || 0), 0);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* General Info */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -95,46 +104,71 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
         </CardContent>
       </Card>
       
+      {/* Objectives Details */}
       <Card>
-        <CardHeader><CardTitle className="font-headline">ዓላማዎች እና ስትራቴጂካዊ እርምጃዎች</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
+        <CardHeader><CardTitle className="font-headline">ዝርዝር ዕቅድ</CardTitle></CardHeader>
+        <CardContent className="space-y-6">
             {submission.objectives?.map((obj, index) => (
                 <div key={index} className="p-4 border rounded-lg bg-slate-50/50">
-                    <dl className="divide-y">
-                        <DescriptionListItem term="ዓላማ" className="text-base font-semibold">{obj.objective}</DescriptionListItem>
-                        <DescriptionListItem term="ዓላማ ክብደት">{obj.objectiveWeight}</DescriptionListItem>
-                    </dl>
-                    <div className="pl-6 mt-3">
-                        <h4 className="font-medium text-muted-foreground mb-2">ስትራቴጂክ እርምጃዎች</h4>
-                        <dl className="divide-y border-l pl-4">
-                        {obj.strategicActions?.map((act, actIndex) => (
-                           <React.Fragment key={actIndex}>
-                                <DescriptionListItem term="እርምጃ">{act.action}</DescriptionListItem>
-                                <DescriptionListItem term="የእርምጃ ክብደት">{act.weight}</DescriptionListItem>
-                           </React.Fragment>
-                        ))}
-                        </dl>
+                    <div className="flex justify-between items-baseline mb-4">
+                        <h3 className="font-headline text-xl text-primary">{obj.objective}</h3>
+                        <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.weight}%</span></p>
                     </div>
+
+                    {obj.strategicActions?.map((action, actionIndex) => (
+                      <div key={actionIndex} className="mt-4">
+                        <h4 className="font-semibold text-lg border-b pb-2 mb-2">{action.action} <span className="text-base font-mono text-muted-foreground">(የእርምጃ ክብደት: {action.weight}%)</span></h4>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <h5 className="font-medium mb-2">መለኪያዎች</h5>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>መለኪያ</TableHead>
+                                            <TableHead className="text-right">ክብደት</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {action.metrics.map((metric, metricIndex) => (
+                                            <TableRow key={metricIndex}>
+                                                <TableCell>{metric.metric}</TableCell>
+                                                <TableCell className="text-right font-mono">{metric.weight}%</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            <div>
+                                <h5 className="font-medium mb-2">ዋና ተግባራት</h5>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>ተግባር</TableHead>
+                                            <TableHead>ዒላማ</TableHead>
+                                            <TableHead className="text-right">ክብደት</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {action.mainTasks.map((task, taskIndex) => (
+                                            <TableRow key={taskIndex}>
+                                                <TableCell>{task.task}</TableCell>
+                                                <TableCell>{task.target}</TableCell>
+                                                <TableCell className="text-right font-mono">{task.weight}%</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </div>
+                      </div>
+                    ))}
                 </div>
             ))}
         </CardContent>
       </Card>
 
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-            <CardHeader><CardTitle className="font-headline">መለኪያዎች እና ተግባራት</CardTitle></CardHeader>
-            <CardContent>
-                <dl className="divide-y">
-                    <DescriptionListItem term="መለኪያ">{submission.metric}</DescriptionListItem>
-                    <DescriptionListItem term="የመለኪያ ክብደት">{submission.metricWeight}</DescriptionListItem>
-                    <DescriptionListItem term="ዋና ተግባር">{submission.mainTask}</DescriptionListItem>
-                    <DescriptionListItem term="የዋና ተግባር ክብደት">{submission.mainTaskWeight}</DescriptionListItem>
-                    <DescriptionListItem term="የዋና ተግባር ዒላማ">{submission.mainTaskTarget}</DescriptionListItem>
-                </dl>
-            </CardContent>
-        </Card>
-        
+      {/* Performance & Budget */}
         <Card>
             <CardHeader><CardTitle className="font-headline">አፈጻጸም እና በጀት</CardTitle></CardHeader>
             <CardContent>
@@ -152,8 +186,8 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                 <p className="w-full text-xl font-bold">ጠቅላላ በጀት: <span className="text-primary">{totalBudget.toLocaleString()} ብር</span></p>
             </CardFooter>
         </Card>
-      </div>
 
+      {/* Action Buttons */}
       {submission.status === 'Pending' && onUpdateStatus && (
         <Card>
           <CardHeader>
@@ -176,6 +210,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
         </Card>
       )}
 
+      {/* Comments */}
       {submission.comments && (
         <Card className="bg-amber-50 border-amber-200">
            <CardHeader className="flex flex-row items-center gap-4">
