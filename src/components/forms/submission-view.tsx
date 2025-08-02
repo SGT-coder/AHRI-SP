@@ -112,7 +112,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                 <div key={index} className="p-4 border rounded-lg bg-slate-50/50">
                     <div className="flex justify-between items-baseline mb-4">
                         <h3 className="font-headline text-xl text-primary">{obj.objective}</h3>
-                        <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.weight}%</span></p>
+                        <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.objectiveWeight}%</span></p>
                     </div>
 
                     {obj.strategicActions?.map((action, actionIndex) => (

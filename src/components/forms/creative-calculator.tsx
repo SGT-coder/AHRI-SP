@@ -86,13 +86,11 @@ const WeightBalancer = ({
     description,
     form,
     fieldArrayName,
-    weightFieldName
 }: { 
     title: string,
     description: string,
     form: UseFormReturn<StrategicPlanFormValues>,
-    fieldArrayName: "objectives" | `objectives.${number}.strategicActions`,
-    weightFieldName: `objectives.${number}.objectiveWeight` | `objectives.${number}.strategicActions.${number}.weight`
+    fieldArrayName: "objectives" | "strategicActions",
 }) => {
     const objectives = form.watch("objectives");
     
@@ -177,7 +175,7 @@ const SimpleCalculator = () => {
         try {
             // Avoid using eval(). A safer approach is to parse and calculate.
             // This simple implementation handles chained operations but not operator precedence.
-            let evalResult = new Function('return ' + input.replace(/[^-()\d/*+.]/g, ''))();
+            let evalResult = new Function('return ' + input.replace(/[^-()\\d/*+.]/g, ''))();
             setResult(String(evalResult));
         } catch (e) {
             setResult("Error");
@@ -266,7 +264,6 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
                     description="የሁሉም ዓላማዎችዎ ጠቅላላ ክብደት 100% መሆኑን ያረጋግጡ።"
                     form={form}
                     fieldArrayName="objectives"
-                    weightFieldName="objectives.0.objectiveWeight" // Placeholder, not used directly
                 />
             </TabsContent>
             <TabsContent value="actions" className="pt-4">
@@ -274,8 +271,7 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
                     title="የስትራቴጂክ እርምጃ ክብደት ማመጣጠኛ"
                     description="የሁሉም ስትራቴጂክ እርምጃዎችዎ ጠቅላላ ክብደት 100% መሆኑን ያረጋግጡ።"
                     form={form}
-                    fieldArrayName="objectives.0.strategicActions" // Placeholder
-                    weightFieldName="objectives.0.strategicActions.0.weight" // Placeholder
+                    fieldArrayName="strategicActions"
                 />
             </TabsContent>
             <TabsContent value="simple-calc" className="pt-4">
@@ -287,5 +283,3 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
     </Dialog>
   );
 }
-
-    

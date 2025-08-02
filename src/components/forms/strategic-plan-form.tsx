@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, Control } from "react-hook-form";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Calculator } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,10 +37,12 @@ import {
 import type { Submission } from "@/lib/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { CreativeCalculator } from "./creative-calculator";
 
-const defaultObjective = {
+
+const defaultObjective: StrategicPlanFormValues['objectives'][0] = {
   objective: "",
-  weight: "",
+  objectiveWeight: "",
   strategicActions: [
     {
       action: "",
@@ -74,10 +76,12 @@ interface StrategicPlanFormProps {
 }
 
 export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly = false }: StrategicPlanFormProps) {
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   
   const form = useForm<StrategicPlanFormValues>({
     resolver: zodResolver(strategicPlanSchema),
     defaultValues: submission ? submission : defaultFormValues,
+    mode: 'onBlur',
   });
 
   const { fields: objectiveFields, append: appendObjective, remove: removeObjective } = useFieldArray({
@@ -108,15 +112,23 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+       <CreativeCalculator isOpen={isCalculatorOpen} onOpenChange={setIsCalculatorOpen} form={form} />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
            <fieldset disabled={isSubmitting || isReadOnly} className="space-y-6 group">
 
-            {/* General Info Card */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold text-center font-headline">{formTitle}</CardTitle>
-                    <CardDescription className="text-center text-lg">{formDescription}</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="text-3xl font-bold text-center font-headline">{formTitle}</CardTitle>
+                        <CardDescription className="text-center text-lg">{formDescription}</CardDescription>
+                    </div>
+                     <Button type="button" variant="outline" size="sm" onClick={() => setIsCalculatorOpen(true)}>
+                        <Calculator className="mr-2" />
+                        ማስያ
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-8 group-disabled:opacity-50">
                     <Card>
@@ -178,6 +190,9 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                            )}
                            {form.formState.errors.objectives && (
                              <FormMessage>{form.formState.errors.objectives.message}</FormMessage>
+                           )}
+                           {form.formState.errors.objectives?.root && (
+                             <FormMessage>{form.formState.errors.objectives.root.message}</FormMessage>
                            )}
                         </CardContent>
                     </Card>
@@ -266,7 +281,7 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                            <SelectContent>{objectiveOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
                        </Select><FormMessage />
                     </FormItem>)} />
-                 <FormField control={control} name={`objectives.${objectiveIndex}.weight`} render={({ field }) => (
+                 <FormField control={control} name={`objectives.${objectiveIndex}.objectiveWeight`} render={({ field }) => (
                     <FormItem><FormLabel>የዓላማ ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የዓላማ ክብደት ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             
@@ -280,6 +295,9 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                         <PlusCircle className="mr-2 h-4 w-4" /> ስትራቴጂክ እርምጃ ጨምር
                     </Button>
                 )}
+                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions`).error &&
+                     <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions`).error?.root?.message}</FormMessage>
+                 }
             </div>
         </div>
     );
@@ -309,8 +327,8 @@ const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, is
                 <MetricsField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
                 <MainTasksField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
             </div>
-             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error &&
-                <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error?.root?.message}</FormMessage>
+             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error &&
+                <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error?.root?.message}</FormMessage>
             }
         </div>
     )
