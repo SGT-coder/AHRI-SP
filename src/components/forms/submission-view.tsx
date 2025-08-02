@@ -42,6 +42,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Separator } from '../ui/separator';
 
 interface SubmissionViewProps {
   submission: Submission;
@@ -80,11 +81,6 @@ const DescriptionListItem = ({ term, children, isMono=false, className="" }: { t
 );
 
 export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewProps) {
-  const totalBudget = [
-    submission.governmentBudgetAmount,
-    submission.grantBudgetAmount,
-    submission.sdgBudgetAmount
-  ].reduce((acc, amount) => acc + (Number(amount) || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -114,7 +110,14 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
       <Card>
         <CardHeader><CardTitle className="font-headline">ዝርዝር ዕቅድ</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-            {submission.objectives?.map((obj, index) => (
+            {submission.objectives?.map((obj, index) => {
+                 const totalBudget = [
+                    obj.governmentBudgetAmount,
+                    obj.grantBudgetAmount,
+                    obj.sdgBudgetAmount
+                ].reduce((acc, amount) => acc + (Number(amount) || 0), 0);
+
+                return (
                 <div key={index} className="p-4 border rounded-lg bg-slate-50/50">
                     <div className="flex justify-between items-baseline mb-4">
                         <h3 className="font-headline text-xl text-primary">{obj.objective}</h3>
@@ -159,29 +162,31 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                             </AccordionItem>
                         ))}
                     </Accordion>
+
+                    <Separator className="my-6" />
+                    
+                    <Card>
+                        <CardHeader><CardTitle className="font-headline text-lg">አፈጻጸም እና በጀት</CardTitle></CardHeader>
+                        <CardContent>
+                            <dl className="divide-y">
+                                <DescriptionListItem term="ፈጻሚ አካል">{obj.executingBody}</DescriptionListItem>
+                                <DescriptionListItem term="የሚከናወንበት ጊዜ">{obj.executionTime}</DescriptionListItem>
+                                <DescriptionListItem term="በጀት ምንጭ">{obj.budgetSource}</DescriptionListItem>
+                                <DescriptionListItem term="ከመንግስት በጀት በብር">{obj.governmentBudgetAmount}</DescriptionListItem>
+                                <DescriptionListItem term="ከመንግስት በጀት ኮድ">{obj.governmentBudgetCode}</DescriptionListItem>
+                                <DescriptionListItem term="ከግራንት በጀት በብር">{obj.grantBudgetAmount}</DescriptionListItem>
+                                <DescriptionListItem term="ከኢስ ዲ ጂ በጀት በብር">{obj.sdgBudgetAmount}</DescriptionListItem>
+                            </dl>
+                        </CardContent>
+                        <CardFooter className="text-right">
+                            <p className="w-full text-xl font-bold">ጠቅላላ በጀት: <span className="text-primary">{totalBudget.toLocaleString()} ብር</span></p>
+                        </CardFooter>
+                    </Card>
                 </div>
-            ))}
+            )})}
         </CardContent>
       </Card>
 
-      {/* Performance & Budget */}
-        <Card>
-            <CardHeader><CardTitle className="font-headline">አፈጻጸም እና በጀት</CardTitle></CardHeader>
-            <CardContent>
-                <dl className="divide-y">
-                    <DescriptionListItem term="ፈጻሚ አካል">{submission.executingBody}</DescriptionListItem>
-                    <DescriptionListItem term="የሚከናወንበት ጊዜ">{submission.executionTime}</DescriptionListItem>
-                    <DescriptionListItem term="በጀት ምንጭ">{submission.budgetSource}</DescriptionListItem>
-                    <DescriptionListItem term="ከመንግስት በጀት በብር">{submission.governmentBudgetAmount}</DescriptionListItem>
-                    <DescriptionListItem term="ከመንግስት በጀት ኮድ">{submission.governmentBudgetCode}</DescriptionListItem>
-                    <DescriptionListItem term="ከግራንት በጀት በብር">{submission.grantBudgetAmount}</DescriptionListItem>
-                    <DescriptionListItem term="ከኢስ ዲ ጂ በጀት በብር">{submission.sdgBudgetAmount}</DescriptionListItem>
-                </dl>
-            </CardContent>
-            <CardFooter className="text-right">
-                <p className="w-full text-xl font-bold">ጠቅላላ በጀት: <span className="text-primary">{totalBudget.toLocaleString()} ብር</span></p>
-            </CardFooter>
-        </Card>
 
       {/* Action Buttons */}
       {submission.status === 'Pending' && onUpdateStatus && (

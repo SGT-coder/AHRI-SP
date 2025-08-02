@@ -50,22 +50,21 @@ export const initialSubmissions: Submission[] = [
       "objectives": [
         {
           "objective": "የሳይንሳዊ መረጃዎች፣ የፈጠራ ፣አዳዲስ እና የተሻሻሉ ምርቶች መሳሪያዎች እና ዘዴዎች ማሳደግ፣ ማምረት እና ማሸጋገር",
-          "weight": "100",
+          "objectiveWeight": "100",
           "strategicActions": [
             {
               "action": "በሽታን መዋጋት",
               "weight": "100",
-               "metrics": [{ "metric": "የበሽታ መቀነስ", "weight": "50" }],
-               "mainTasks": [{ "task": "ሙከራ ማካሄድ", "weight": "50", "target": "1000 ተሳታፊዎች" }]
+               "metrics": [{ "metric": "የበሽታ መቀነስ", "weight": "50", "mainTasks": [{ "task": "ሙከራ ማካሄድ", "weight": "50", "target": "1000 ተሳታፊዎች" }] }]
             }
-          ]
+          ],
+            "executingBody": "ክሊኒካል ሙከራ ዳይሬክቶሬት",
+            "executionTime": "1ኛ ሩብ ዓመት",
+            "budgetSource": "መንግስት",
+            "governmentBudgetAmount": "500000",
+            "governmentBudgetCode": "6223 ለምርምር እና ለልማት አላቂ ዕቃዎች"
         }
       ],
-      "executingBody": "ክሊኒካል ሙከራ ዳይሬክቶሬት",
-      "executionTime": "1ኛ ሩብ ዓመት",
-      "budgetSource": "መንግስት",
-      "governmentBudgetAmount": "500000",
-      "governmentBudgetCode": "6223 ለምርምር እና ለልማት አላቂ ዕቃዎች"
     },
     {
       "id": "TRX-2025-0709-FOQDB",
@@ -80,21 +79,20 @@ export const initialSubmissions: Submission[] = [
        "objectives": [
         {
           "objective": "በምርምር ውስጥ የማህበረሰቡን ተሳትፎ ማሳደግ",
-          "weight": "100",
+          "objectiveWeight": "100",
           "strategicActions": [
             {
               "action": "የጤና ግንዛቤ ማስጨበጫ ዘመቻዎችን ማካሄድ",
               "weight": "100",
-              "metrics": [{ "metric": "የዘመቻ ተደራሽነት", "weight": "60" }],
-              "mainTasks": [{ "task": "ወርክሾፖችን ማደራጀት", "weight": "40", "target": "5 ወርክሾፖች" }]
+              "metrics": [{ "metric": "የዘመቻ ተደራሽነት", "weight": "60", "mainTasks": [{ "task": "ወርክሾፖችን ማደራጀት", "weight": "40", "target": "5 ወርክሾፖች" }] }]
             }
-          ]
+          ],
+            "executingBody": "የህዝብ ግንኙነትና ኮሙኒኬሽን",
+            "executionTime": "2ኛ ሩብ ዓመት",
+            "budgetSource": "ግራንት",
+            "grantBudgetAmount": "75000"
         }
       ],
-      "executingBody": "የህዝብ ግንኙነትና ኮሙኒኬሽን",
-      "executionTime": "2ኛ ሩብ ዓመት",
-      "budgetSource": "ግራንት",
-      "grantBudgetAmount": "75000"
     },
     {
       "id": "TRX-2025-0709-R9VPX",
@@ -109,27 +107,25 @@ export const initialSubmissions: Submission[] = [
       "objectives": [
         {
           "objective": "ተቋማዊ መሠረተ ልማትን ማሻሻል",
-          "weight": "100",
+          "objectiveWeight": "100",
           "strategicActions": [
             {
               "action": "አዲስ መሳሪያዎችን መግጠም",
               "weight": "60",
-              "metrics": [{ "metric": "የተከናወኑ ምርመራዎች ብዛት", "weight": "70" }],
-              "mainTasks": [{ "task": "የመሳሪያ ግዥ", "weight": "30", "target": "3 አዳዲስ መሳሪያዎች" }]
+              "metrics": [{ "metric": "የተከናወኑ ምርመራዎች ብዛት", "weight": "70", "mainTasks": [{ "task": "የመሳሪያ ግዥ", "weight": "30", "target": "3 አዳዲስ መሳሪያዎች" }] }]
             },
             {
                 "action": "የሰራተኞች ስልጠና",
                 "weight": "40",
-                 "metrics": [{ "metric": "የሰለጠኑ ሰራተኞች ብዛት", "weight": "50" }],
-                 "mainTasks": [{ "task": "ስልጠና ማዘጋጀት", "weight": "50", "target": "20 ሰራተኞች" }]
+                 "metrics": [{ "metric": "የሰለጠኑ ሰራተኞች ብዛት", "weight": "50", "mainTasks": [{ "task": "ስልጠና ማዘጋጀት", "weight": "50", "target": "20 ሰራተኞች" }] }]
             }
-          ]
+          ],
+            "executingBody": "ላብራቶሪ አስተዳደር ዳይሬክቶሬት",
+            "executionTime": "4ኛ ሩብ ዓመት",
+            "budgetSource": "መንግስት",
+            "governmentBudgetAmount": "1200000",
+            "governmentBudgetCode": "6313 ለፕላንት፣ ለማሽነሪ እና ለመሣሪያ መግዣ"
         }
-      ],
-      "executingBody": "ላብራቶሪ አስተዳደር ዳይሬክቶሬት",
-      "executionTime": "4ኛ ሩብ ዓመት",
-      "budgetSource": "መንግስት",
-      "governmentBudgetAmount": "1200000",
-      "governmentBudgetCode": "6313 ለፕላንት፣ ለማሽነሪ እና ለመሣሪያ መግዣ"
+      ]
     }
   ]

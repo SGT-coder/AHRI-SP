@@ -47,6 +47,13 @@ const objectiveSchema = z.object({
     objective: z.string({ required_error: "ዓላማ መምረጥ ያስፈልጋል" }).min(1, "ዓላማ መምረጥ ያስፈልጋል"),
     objectiveWeight: weightSchema,
     strategicActions: z.array(strategicActionSchema).min(1, "ቢያንስ አንድ ስትራቴጂክ እርምጃ ያስፈልጋል።"),
+    executingBody: z.string({ required_error: "ፈጻሚ አካል መምረጥ ያስፈልጋል" }).min(1, "ፈጻሚ አካል መምረጥ ያስፈልጋል"),
+    executionTime: z.string({ required_error: "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል" }).min(1, "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል"),
+    budgetSource: z.string({ required_error: "የበጀት ምንጭ መምረጥ ያስፈልጋል" }).min(1, "የበጀት ምንጭ መምረጥ ያስፈልጋል"),
+    governmentBudgetAmount: z.string().optional(),
+    governmentBudgetCode: z.string().optional(),
+    grantBudgetAmount: z.string().optional(),
+    sdgBudgetAmount: z.string().optional(),
 }).superRefine((data, ctx) => {
     const totalWeight = data.strategicActions.reduce((acc, sa) => acc + (parseFloat(sa.weight) || 0), 0);
     if (Math.abs(totalWeight - 100) > 0.01) {
@@ -56,26 +63,7 @@ const objectiveSchema = z.object({
             path: ['strategicActions'],
         });
     }
-});
-
-
-export const strategicPlanSchema = z.object({
-    userName: z.string({ required_error: "ስም ያስፈልጋል" }).min(1, "ስም ያስፈልጋል"),
-    projectTitle: z.string({ required_error: "የእቅድ ርዕስ ያስፈልጋል" }).min(1, "የእቅድ ርዕስ ያስፈልጋል"),
-    department: z.string({ required_error: "ዲፓርትመንት መምረጥ ያስፈልጋል" }).min(1, "ዲፓርትመንት መምረጥ ያስፈልጋል"),
-    goal: z.string({ required_error: "ግብ መምረጥ ያስፈልጋል" }).min(1, "ግብ መምረጥ ያስፈልጋል"),
-    
-    objectives: z.array(objectiveSchema).min(1, "ቢያንስ አንድ ዓላማ ያስፈልጋል።"),
-    
-    executingBody: z.string({ required_error: "ፈጻሚ አካል መምረጥ ያስፈልጋል" }).min(1, "ፈጻሚ አካል መምረጥ ያስፈልጋል"),
-    executionTime: z.string({ required_error: "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል" }).min(1, "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል"),
-    budgetSource: z.string({ required_error: "የበጀት ምንጭ መምረጥ ያስፈልጋል" }).min(1, "የበጀት ምንጭ መምረጥ ያስፈልጋል"),
-    governmentBudgetAmount: z.string().optional(),
-    governmentBudgetCode: z.string().optional(),
-    grantBudgetAmount: z.string().optional(),
-    sdgBudgetAmount: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.budgetSource === 'መንግስት') {
+     if (data.budgetSource === 'መንግስት') {
         if (!data.governmentBudgetAmount || data.governmentBudgetAmount.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከመንግስት በጀት መጠን መግባት አለበት።", path: ['governmentBudgetAmount'] });
         }
@@ -93,7 +81,18 @@ export const strategicPlanSchema = z.object({
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከኢስ ዲ ጂ በጀት መጠን መግባት አለበት።", path: ['sdgBudgetAmount'] });
         }
     }
+});
 
+
+export const strategicPlanSchema = z.object({
+    userName: z.string({ required_error: "ስም ያስፈልጋል" }).min(1, "ስም ያስፈልጋል"),
+    projectTitle: z.string({ required_error: "የእቅድ ርዕስ ያስፈልጋል" }).min(1, "የእቅድ ርዕስ ያስፈልጋል"),
+    department: z.string({ required_error: "ዲፓርትመንት መምረጥ ያስፈልጋል" }).min(1, "ዲፓርትመንት መምረጥ ያስፈልጋል"),
+    goal: z.string({ required_error: "ግብ መምረጥ ያስፈልጋል" }).min(1, "ግብ መምረጥ ያስፈልጋል"),
+    
+    objectives: z.array(objectiveSchema).min(1, "ቢያንስ አንድ ዓላማ ያስፈልጋል።"),
+
+}).superRefine((data, ctx) => {
     const totalObjectiveWeight = data.objectives.reduce((acc, obj) => acc + (parseFloat(obj.objectiveWeight) || 0), 0);
     if (Math.abs(totalObjectiveWeight - 100) > 0.01) {
          ctx.addIssue({

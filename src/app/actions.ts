@@ -8,8 +8,8 @@ import type { Submission, SubmissionStatus, User, UserStatus, Role } from '@/lib
 import { initialSubmissions, initialUsers } from '@/lib/data';
 
 // In-memory database
-let submissions: Submission[] = [...initialSubmissions];
-let users: User[] = [...initialUsers];
+let submissions: Submission[] = JSON.parse(JSON.stringify(initialSubmissions));
+let users: User[] = JSON.parse(JSON.stringify(initialUsers));
 
 const statusTranslations: Record<UserStatus | SubmissionStatus, string> = {
     Approved: "ጸድቋል",

@@ -50,6 +50,13 @@ const defaultObjective: StrategicPlanFormValues['objectives'][0] = {
       metrics: [{ metric: "", weight: "", mainTasks: [{ task: "", weight: "", target: "" }] }],
     },
   ],
+  executingBody: "",
+  executionTime: "",
+  budgetSource: "",
+  governmentBudgetAmount: "",
+  governmentBudgetCode: "",
+  grantBudgetAmount: "",
+  sdgBudgetAmount: "",
 };
 
 const defaultFormValues: StrategicPlanFormValues = {
@@ -58,13 +65,6 @@ const defaultFormValues: StrategicPlanFormValues = {
     department: "",
     goal: "",
     objectives: [defaultObjective],
-    executingBody: "",
-    executionTime: "",
-    budgetSource: "",
-    governmentBudgetAmount: "",
-    governmentBudgetCode: "",
-    grantBudgetAmount: "",
-    sdgBudgetAmount: "",
 };
 
 interface StrategicPlanFormProps {
@@ -92,7 +92,6 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
     form.reset(submission || defaultFormValues);
   }, [submission, form]);
 
-  const budgetSource = form.watch("budgetSource");
   const formErrors = form.formState.errors.objectives?.root?.message;
 
   function onSubmit(data: StrategicPlanFormValues) {
@@ -172,7 +171,7 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
 
                     {/* Dynamic Objectives Section */}
                     <Card>
-                        <CardHeader><CardTitle className="text-xl">2. ዓላማዎች እና ስትራቴጂካዊ እርምጃዎች</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="text-xl">2. ዓላማዎች</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
                            {objectiveFields.map((field, index) => (
                                <ObjectiveField
@@ -193,47 +192,6 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
                            {form.formState.errors.objectives?.root && (
                              <FormMessage>{form.formState.errors.objectives.root.message}</FormMessage>
                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Performance and Budget Card */}
-                    <Card>
-                        <CardHeader><CardTitle className="text-xl">2.2 አፈጻጸም እና በጀት</CardTitle></CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <FormField control={form.control} name="executingBody" render={({ field }) => (
-                                    <FormItem><FormLabel>ፈጻሚ አካል</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="ፈጻሚ አካል ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>{executingBodyOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="executionTime" render={({ field }) => (
-                                    <FormItem><FormLabel>የሚከናወንበት ጊዜ</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="የሚከናወንበትን ጊዜ ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>{executionTimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={form.control} name="budgetSource" render={({ field }) => (
-                                    <FormItem><FormLabel>በጀት ምንጭ</FormLabel>
-                                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                                            <FormControl><SelectTrigger><SelectValue placeholder="የበጀት ምንጭ ይምረጡ" /></SelectTrigger></FormControl>
-                                            <SelectContent>{budgetSourceOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
-                                        </Select><FormMessage /></FormItem>
-                                )} />
-                            </div>
-                            
-                            {budgetSource && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
-                                    {budgetSource === 'መንግስት' && (<>
-                                        <FormField control={form.control} name="governmentBudgetAmount" render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="governmentBudgetCode" render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት ኮድ</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="ኮድ ይምረጡ" /></SelectTrigger></FormControl><SelectContent>{govBudgetCodeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                                    </>)}
-                                    {budgetSource === 'ግራንት' && (<FormField control={form.control} name="grantBudgetAmount" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከግራንት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
-                                    {budgetSource === 'ኢስዲጂ' && (<FormField control={form.control} name="sdgBudgetAmount" render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከኢስ ዲ ጂ በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </CardContent>
@@ -265,6 +223,9 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
         control,
         name: `objectives.${objectiveIndex}.strategicActions`,
     });
+    
+    const budgetSource = control.getFieldState(`objectives.${objectiveIndex}.budgetSource`).isTouched ? control.getValues(`objectives.${objectiveIndex}.budgetSource`) : "";
+
 
     return (
         <div className="p-4 border rounded-lg space-y-4 relative bg-slate-50/50">
@@ -284,8 +245,9 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                     <FormItem><FormLabel>የዓላማ ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የዓላማ ክብደት ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             
+            <Separator />
+            <h4 className="font-medium text-lg text-muted-foreground">2.1. ስትራቴጂክ እርምጃዎች</h4>
             <div className="pl-4 ml-2 space-y-4">
-                 <h4 className="font-medium text-sm text-muted-foreground">2.1. ስትራቴጂክ እርምጃዎች</h4>
                 {strategicActionFields.map((actionField, actionIndex) => (
                     <StrategicActionField key={actionField.id} control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} remove={remove} isReadOnly={isReadOnly} />
                 ))}
@@ -298,6 +260,48 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                      <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions`).error?.root?.message}</FormMessage>
                  }
             </div>
+            
+            <Separator />
+            <h4 className="font-medium text-lg text-muted-foreground">2.2 አፈጻጸም እና በጀት</h4>
+             <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={control} name={`objectives.${objectiveIndex}.executingBody`} render={({ field }) => (
+                        <FormItem><FormLabel>ፈጻሚ አካል</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="ፈጻሚ አካል ይምረጡ" /></SelectTrigger></FormControl>
+                                <SelectContent>{executingBodyOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                            </Select><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={control} name={`objectives.${objectiveIndex}.executionTime`} render={({ field }) => (
+                        <FormItem><FormLabel>የሚከናወንበት ጊዜ</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="የሚከናወንበትን ጊዜ ይምረጡ" /></SelectTrigger></FormControl>
+                                <SelectContent>{executionTimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                            </Select><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={control} name={`objectives.${objectiveIndex}.budgetSource`} render={({ field }) => (
+                        <FormItem><FormLabel>በጀት ምንጭ</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="የበጀት ምንጭ ይምረጡ" /></SelectTrigger></FormControl>
+                                <SelectContent>{budgetSourceOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
+                            </Select><FormMessage /></FormItem>
+                    )} />
+                </div>
+                
+                {budgetSource && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+                        {budgetSource === 'መንግስት' && (<>
+                            <FormField control={control} name={`objectives.${objectiveIndex}.governmentBudgetAmount`} render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={control} name={`objectives.${objectiveIndex}.governmentBudgetCode`} render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት ኮድ</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="ኮድ ይምረጡ" /></SelectTrigger></FormControl><SelectContent>{govBudgetCodeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                        </>)}
+                        {budgetSource === 'ግራንት' && (<FormField control={control} name={`objectives.${objectiveIndex}.grantBudgetAmount`} render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከግራንት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                        {budgetSource === 'ኢስዲጂ' && (<FormField control={control} name={`objectives.${objectiveIndex}.sdgBudgetAmount`} render={({ field }) => (<FormItem className="md:col-span-1"><FormLabel>ከኢስ ዲ ጂ በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />)}
+                    </div>
+                )}
+            </div>
+             {control.getFieldState(`objectives.${objectiveIndex}`).error?.root &&
+                <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}`).error?.root?.message}</FormMessage>
+            }
         </div>
     );
 }
