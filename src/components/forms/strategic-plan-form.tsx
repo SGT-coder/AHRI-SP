@@ -47,8 +47,7 @@ const defaultObjective: StrategicPlanFormValues['objectives'][0] = {
     {
       action: "",
       weight: "",
-      metrics: [{ metric: "", weight: "" }],
-      mainTasks: [{ task: "", weight: "", target: "" }],
+      metrics: [{ metric: "", weight: "", mainTasks: [{ task: "", weight: "", target: "" }] }],
     },
   ],
 };
@@ -291,7 +290,7 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                     <StrategicActionField key={actionField.id} control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} remove={remove} isReadOnly={isReadOnly} />
                 ))}
                 {!isReadOnly && (
-                    <Button type="button" size="sm" variant="outline" onClick={() => append({ action: "", weight: "", metrics: [{ metric: "", weight: ""}], mainTasks: [{task: "", weight: "", target: ""}] })}>
+                    <Button type="button" size="sm" variant="outline" onClick={() => append({ action: "", weight: "", metrics: [{ metric: "", weight: "", mainTasks: [{task: "", weight: "", target: ""}]}] })}>
                         <PlusCircle className="mr-2 h-4 w-4" /> ስትራቴጂክ እርምጃ ጨምር
                     </Button>
                 )}
@@ -304,6 +303,11 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
 }
 
 const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, remove: (index: number) => void, isReadOnly?: boolean }) => {
+    const { fields, append, remove: removeMetric } = useFieldArray({
+        control,
+        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`,
+    });
+
     return (
         <div className="p-4 border rounded-lg space-y-4 relative bg-white">
              {!isReadOnly && (
@@ -324,8 +328,17 @@ const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, is
             
             <div className="pl-4 ml-2 space-y-4">
                 <h5 className="font-medium text-sm text-muted-foreground">2.1.1 መለኪያዎች እና ተግባራት</h5>
-                <MetricsField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
-                <MainTasksField control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} isReadOnly={isReadOnly} />
+                 {fields.map((field, metricIndex) => (
+                    <MetricsField key={field.id} control={control} objectiveIndex={objectiveIndex} actionIndex={actionIndex} metricIndex={metricIndex} remove={removeMetric} isReadOnly={isReadOnly} />
+                ))}
+                {!isReadOnly && (
+                    <Button type="button" size="sm" variant="outline" onClick={() => append({ metric: "", weight: "", mainTasks: [{task: "", weight: "", target: ""}] })}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> መለኪያ ጨምር
+                    </Button>
+                )}
+                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error &&
+                    <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error?.root?.message}</FormMessage>
+                }
             </div>
              {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error &&
                 <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error?.root?.message}</FormMessage>
@@ -334,47 +347,42 @@ const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, is
     )
 }
 
-const MetricsField = ({ control, objectiveIndex, actionIndex, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, isReadOnly?: boolean }) => {
-    const { fields, append, remove } = useFieldArray({
+const MetricsField = ({ control, objectiveIndex, actionIndex, metricIndex, remove, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, metricIndex: number, remove: (index: number) => void, isReadOnly?: boolean }) => {
+    const { fields, append, remove: removeTask } = useFieldArray({
         control,
-        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`,
+        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks`,
     });
     return (
-        <div className="space-y-2">
-            <h6 className="font-medium text-xs text-muted-foreground">መለኪያዎች</h6>
-            {fields.map((field, metricIndex) => (
-                 <div key={field.id} className="flex items-start gap-2">
-                    <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.metric`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="መለኪያ ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.weight`} render={({ field }) => (<FormItem className="w-48"><FormControl><Input type="number" placeholder="የመለኪያ ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    {!isReadOnly && <Button type="button" variant="ghost" size="icon" onClick={() => remove(metricIndex)}><Trash2 className="h-4 w-4" /></Button>}
-                </div>
-            ))}
-            {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ metric: "", weight: ""})}><PlusCircle className="mr-2 h-4 w-4" /> መለኪያ ጨምር</Button>}
-        </div>
-    )
-}
+        <div className="p-4 border rounded-md space-y-4 relative bg-slate-50/50">
+             {!isReadOnly && (
+                <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground hover:text-destructive" onClick={() => remove(metricIndex)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.metric`} render={({ field }) => (<FormItem><FormLabel>መለኪያ</FormLabel><FormControl><Input placeholder="መለኪያ ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.weight`} render={({ field }) => (<FormItem><FormLabel>የመለኪያ ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የመለኪያ ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
 
-const MainTasksField = ({ control, objectiveIndex, actionIndex, isReadOnly }: { control: Control<StrategicPlanFormValues>, objectiveIndex: number, actionIndex: number, isReadOnly?: boolean }) => {
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: `objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks`,
-    });
-    return (
-        <div className="space-y-2">
-            <h6 className="font-medium text-xs text-muted-foreground">ዋና ተግባራት</h6>
-            {fields.map((field, taskIndex) => (
-                 <div key={field.id} className="p-2 border rounded-md space-y-2">
-                    <div className="flex items-start gap-2">
-                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.task`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="ዋና ተግባር ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       {!isReadOnly && <Button type="button" variant="ghost" size="icon" onClick={() => remove(taskIndex)}><Trash2 className="h-4 w-4" /></Button>}
-                    </div>
-                     <div className="flex items-start gap-2">
-                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.weight`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input type="number" placeholder="የተግባር ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (<FormItem className="flex-1"><FormControl><Input placeholder="የተግባር ዒላማ" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    </div>
-                 </div>
-            ))}
-            {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ task: "", weight: "", target: ""})}><PlusCircle className="mr-2 h-4 w-4" /> ዋና ተግባር ጨምር</Button>}
+            <div className="pl-4 ml-2 space-y-2">
+                 <h6 className="font-medium text-xs text-muted-foreground">ዋና ተግባራት</h6>
+                 {fields.map((field, taskIndex) => (
+                     <div key={field.id} className="p-2 border rounded-md space-y-2 relative bg-white">
+                         {!isReadOnly && <Button type="button" variant="ghost" size="icon" onClick={() => removeTask(taskIndex)} className="absolute top-1 right-1 h-6 w-6"><Trash2 className="h-4 w-4" /></Button>}
+                        <div className="flex items-start gap-2">
+                           <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.task`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">ተግባር</FormLabel><FormControl><Input placeholder="ዋና ተግባር ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                         <div className="flex items-start gap-2">
+                           <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.weight`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">የተግባር ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የተግባር ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">ዒላማ</FormLabel><FormControl><Input placeholder="የተግባር ዒላማ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                        </div>
+                     </div>
+                ))}
+                 {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ task: "", weight: "", target: ""})}><PlusCircle className="mr-2 h-4 w-4" /> ዋና ተግባር ጨምር</Button>}
+            </div>
+             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}`).error &&
+                <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}`).error?.root?.message}</FormMessage>
+            }
         </div>
     )
 }

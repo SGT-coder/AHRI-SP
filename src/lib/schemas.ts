@@ -16,21 +16,28 @@ const mainTaskSchema = z.object({
 const metricSchema = z.object({
     metric: z.string().min(1, "የመለኪያ መግለጫ ያስፈልጋል።"),
     weight: weightSchema,
+    mainTasks: z.array(mainTaskSchema).min(1, "ቢያንስ አንድ ዋና ተግባር ያስፈልጋል።"),
+}).superRefine((data, ctx) => {
+    const totalWeight = data.mainTasks.reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
+    if (Math.abs(totalWeight - 100) > 0.01) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `የዋና ተግባራት ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
+            path: [],
+        });
+    }
 });
 
 const strategicActionSchema = z.object({
     action: z.string().min(1, "የእርምጃ መግለጫ ያስፈልጋል።"),
     weight: weightSchema,
     metrics: z.array(metricSchema).min(1, "ቢያንስ አንድ መለኪያ ያስፈልጋል።"),
-    mainTasks: z.array(mainTaskSchema).min(1, "ቢያንስ አንድ ዋና ተግባር ያስፈልጋል።"),
 }).superRefine((data, ctx) => {
-    const totalWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0) +
-                        data.mainTasks.reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
-    
+    const totalWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
     if (Math.abs(totalWeight - 100) > 0.01) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `የመለኪያዎች እና የተግባሮች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
+            message: `የመለኪያዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
             path: [],
         });
     }

@@ -36,6 +36,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 interface SubmissionViewProps {
   submission: Submission;
@@ -115,54 +121,44 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                         <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.objectiveWeight}%</span></p>
                     </div>
 
-                    {obj.strategicActions?.map((action, actionIndex) => (
-                      <div key={actionIndex} className="mt-4">
-                        <h4 className="font-semibold text-lg border-b pb-2 mb-2">{action.action} <span className="text-base font-mono text-muted-foreground">(የእርምጃ ክብደት: {action.weight}%)</span></h4>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div>
-                                <h5 className="font-medium mb-2">መለኪያዎች</h5>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>መለኪያ</TableHead>
-                                            <TableHead className="text-right">ክብደት</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {action.metrics.map((metric, metricIndex) => (
-                                            <TableRow key={metricIndex}>
-                                                <TableCell>{metric.metric}</TableCell>
-                                                <TableCell className="text-right font-mono">{metric.weight}%</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                            <div>
-                                <h5 className="font-medium mb-2">ዋና ተግባራት</h5>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>ተግባር</TableHead>
-                                            <TableHead>ዒላማ</TableHead>
-                                            <TableHead className="text-right">ክብደት</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {action.mainTasks.map((task, taskIndex) => (
-                                            <TableRow key={taskIndex}>
-                                                <TableCell>{task.task}</TableCell>
-                                                <TableCell>{task.target}</TableCell>
-                                                <TableCell className="text-right font-mono">{task.weight}%</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </div>
-                      </div>
-                    ))}
+                    <Accordion type="single" collapsible className="w-full">
+                         {obj.strategicActions?.map((action, actionIndex) => (
+                            <AccordionItem value={`action-${actionIndex}`} key={actionIndex}>
+                                <AccordionTrigger className="font-semibold text-lg hover:no-underline">
+                                    {action.action}
+                                    <span className="text-base font-mono text-muted-foreground ml-4">(የእርምጃ ክብደት: {action.weight}%)</span>
+                                </AccordionTrigger>
+                                <AccordionContent className="pl-4">
+                                     {action.metrics.map((metric, metricIndex) => (
+                                        <div key={metricIndex} className="p-4 mt-2 border rounded-md bg-white">
+                                            <div className="flex justify-between items-baseline mb-2">
+                                                <h5 className="font-semibold">{metric.metric}</h5>
+                                                <span className="text-sm font-mono text-muted-foreground">(የመለኪያ ክብደት: {metric.weight}%)</span>
+                                            </div>
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>ዋና ተግባር</TableHead>
+                                                        <TableHead>ዒላማ</TableHead>
+                                                        <TableHead className="text-right">ክብደት</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {metric.mainTasks.map((task, taskIndex) => (
+                                                        <TableRow key={taskIndex}>
+                                                            <TableCell>{task.task}</TableCell>
+                                                            <TableCell>{task.target}</TableCell>
+                                                            <TableCell className="text-right font-mono">{task.weight}%</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                     ))}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
                 </div>
             ))}
         </CardContent>
