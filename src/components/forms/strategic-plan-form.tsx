@@ -74,12 +74,30 @@ interface StrategicPlanFormProps {
     isReadOnly?: boolean;
 }
 
+const processSubmissionForForm = (submission: Submission | null | undefined): StrategicPlanFormValues => {
+  if (!submission) {
+    return defaultFormValues;
+  }
+  return {
+    ...defaultFormValues,
+    ...submission,
+    objectives: submission.objectives?.map(obj => ({
+      ...defaultObjective,
+      ...obj,
+      governmentBudgetAmount: obj.governmentBudgetAmount || '',
+      governmentBudgetCode: obj.governmentBudgetCode || '',
+      grantBudgetAmount: obj.grantBudgetAmount || '',
+      sdgBudgetAmount: obj.sdgBudgetAmount || '',
+    })),
+  };
+};
+
 export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly = false }: StrategicPlanFormProps) {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   
   const form = useForm<StrategicPlanFormValues>({
     resolver: zodResolver(strategicPlanSchema),
-    defaultValues: submission ? submission : defaultFormValues,
+    defaultValues: processSubmissionForForm(submission),
     mode: 'onBlur',
   });
 
@@ -89,7 +107,7 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
   });
 
   useEffect(() => {
-    form.reset(submission || defaultFormValues);
+    form.reset(processSubmissionForForm(submission));
   }, [submission, form]);
 
   const formErrors = form.formState.errors.objectives?.message;
@@ -412,5 +430,3 @@ const MetricsField = ({ control, objectiveIndex, actionIndex, metricIndex, remov
         </div>
     )
 }
-
-    

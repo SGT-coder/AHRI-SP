@@ -32,10 +32,10 @@ const objectiveSchema = z.object({
     executingBody: z.string({ required_error: "ፈጻሚ አካል መምረጥ ያስፈልጋል" }).min(1, "ፈጻሚ አካል መምረጥ ያስፈልጋል"),
     executionTime: z.string({ required_error: "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል" }).min(1, "የሚከናወንበት ጊዜ መምረጥ ያስፈልጋል"),
     budgetSource: z.string({ required_error: "የበጀት ምንጭ መምረጥ ያስፈልጋል" }).min(1, "የበጀት ምንጭ መምረጥ ያስፈልጋል"),
-    governmentBudgetAmount: z.string().optional(),
-    governmentBudgetCode: z.string().optional(),
-    grantBudgetAmount: z.string().optional(),
-    sdgBudgetAmount: z.string().optional(),
+    governmentBudgetAmount: z.string().optional().default(''),
+    governmentBudgetCode: z.string().optional().default(''),
+    grantBudgetAmount: z.string().optional().default(''),
+    sdgBudgetAmount: z.string().optional().default(''),
 }).superRefine((data, ctx) => {
      if (data.budgetSource === 'መንግስት') {
         if (!data.governmentBudgetAmount || data.governmentBudgetAmount.trim() === '') {
@@ -143,5 +143,3 @@ export const adminAddUserSchema = z.object({
     path: ["confirmPassword"],
 });
 export type AdminAddUserFormValues = z.infer<typeof adminAddUserSchema>;
-
-    
