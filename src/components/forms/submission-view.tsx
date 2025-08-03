@@ -81,6 +81,8 @@ const DescriptionListItem = ({ term, children, isMono=false, className="" }: { t
 );
 
 export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewProps) {
+    const hasObjectives = submission.objectives && submission.objectives.length > 0;
+    const hasLegacyFields = submission.objective || submission.strategicAction;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -102,11 +104,21 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
             <DescriptionListItem term="ግብ">{submission.goal}</DescriptionListItem>
             <DescriptionListItem term="የገባበት ቀን"><DateDisplay dateString={submission.submittedAt} includeTime /></DescriptionListItem>
             <DescriptionListItem term="ለመጨረሻ ጊዜ የተሻሻለው"><DateDisplay dateString={submission.lastModifiedAt} includeTime /></DescriptionListItem>
+             {hasLegacyFields && (
+                <>
+                <DescriptionListItem term="ዓላማ">{submission.objective}</DescriptionListItem>
+                <DescriptionListItem term="ስትራቴጂክ እርምጃ">{submission.strategicAction}</DescriptionListItem>
+                <DescriptionListItem term="መለኪያ">{submission.metric}</DescriptionListItem>
+                <DescriptionListItem term="ዋና ተግባር">{submission.mainTask}</DescriptionListItem>
+                <DescriptionListItem term="የዋና ተግባር ዒላማ">{submission.mainTaskTarget}</DescriptionListItem>
+                </>
+            )}
           </dl>
         </CardContent>
       </Card>
       
       {/* Objectives Details */}
+      {hasObjectives && (
       <Card>
         <CardHeader><CardTitle className="font-headline">ዝርዝር ዕቅድ</CardTitle></CardHeader>
         <CardContent className="space-y-6">
@@ -121,7 +133,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                 return (
                 <div key={index} className="p-4 border rounded-lg bg-slate-50/50">
                     <div className="flex justify-between items-baseline mb-4">
-                        <h3 className="font-headline text-xl text-primary">{objectiveNumber}. {obj.objective}</h3>
+                        <h3 className="font-headline text-xl text-primary">{objectiveNumber}. ዓላማ: {obj.objective}</h3>
                         <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.objectiveWeight}%</span></p>
                     </div>
 
@@ -131,7 +143,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                              return (
                             <AccordionItem value={`action-${actionIndex}`} key={actionIndex}>
                                 <AccordionTrigger className="font-semibold text-lg hover:no-underline">
-                                    {actionNumber}. {action.action}
+                                    {actionNumber}. ስትራቴጂክ እርምጃ: {action.action}
                                     <span className="text-base font-mono text-muted-foreground ml-4">(የእርምጃ ክብደት: {action.weight}%)</span>
                                 </AccordionTrigger>
                                 <AccordionContent className="pl-4">
@@ -140,7 +152,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                                          return (
                                         <div key={metricIndex} className="p-4 mt-2 border rounded-md bg-white">
                                             <div className="flex justify-between items-baseline mb-2">
-                                                <h5 className="font-semibold">{metricNumber}. {metric.metric}</h5>
+                                                <h5 className="font-semibold">{metricNumber}. መለኪያ: {metric.metric}</h5>
                                                 <span className="text-sm font-mono text-muted-foreground">(የመለኪያ ክብደት: {metric.weight}%)</span>
                                             </div>
                                             <Table>
@@ -191,6 +203,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
             )})}
         </CardContent>
       </Card>
+      )}
 
 
       {/* Action Buttons */}
@@ -235,5 +248,3 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
     </div>
   );
 }
-
-    
