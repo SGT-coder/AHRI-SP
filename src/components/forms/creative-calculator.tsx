@@ -20,71 +20,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Separator } from "@/components/ui/separator";
 import type { StrategicPlanFormValues } from "@/lib/schemas";
 
-const BudgetCalculator = ({ form }: { form: UseFormReturn<StrategicPlanFormValues> }) => {
-    const [entries, setEntries] = React.useState<{label: string, amount: number}[]>([]);
-    const [newLabel, setNewLabel] = React.useState("");
-    const [newAmount, setNewAmount] = React.useState("");
-
-    const handleAddEntry = () => {
-        const amount = parseFloat(newAmount);
-        if (newLabel.trim() && !isNaN(amount)) {
-            setEntries([...entries, { label: newLabel, amount }]);
-            setNewLabel("");
-            setNewAmount("");
-        }
-    };
-
-    const handleRemoveEntry = (index: number) => {
-        setEntries(entries.filter((_, i) => i !== index));
-    };
-
-    const manualTotal = entries.reduce((acc, entry) => acc + entry.amount, 0);
-
-    const watchedObjectives = form.watch("objectives");
-    const formTotal = watchedObjectives.reduce((totalAcc, objective) => {
-        const gov = parseFloat(objective.governmentBudgetAmount || '0') || 0;
-        const grant = parseFloat(objective.grantBudgetAmount || '0') || 0;
-        const sdg = parseFloat(objective.sdgBudgetAmount || '0') || 0;
-        return totalAcc + gov + grant + sdg;
-    }, 0);
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>የበጀት ማስያ</CardTitle>
-                <CardDescription>የተለያዩ ወጪዎችን በፍጥነት ይደምሩ።</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    {entries.map((entry, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                            <span className="flex-1 p-2 bg-muted rounded-md text-sm">{entry.label}</span>
-                            <span className="p-2 bg-muted rounded-md font-mono text-sm">{entry.amount.toLocaleString()}</span>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveEntry(index)}>
-                                <Minus className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-                 <div className="flex items-center gap-2">
-                    <Input placeholder="የወጪ አይነት" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-                    <Input type="number" placeholder="መጠን" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
-                    <Button variant="outline" size="icon" onClick={handleAddEntry}>
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </div>
-                 <Separator />
-                <div className="text-right text-xl font-bold">
-                    ጠቅላላ ድምር: <span className="font-mono text-primary">{manualTotal.toLocaleString()} ብር</span>
-                </div>
-                 <Separator />
-                 <div className="text-right text-lg font-semibold">
-                    በቅጹ ውስጥ ያለው ጠቅላላ በጀት: <span className="font-mono text-accent">{formTotal.toLocaleString()} ብር</span>
-                </div>
-            </CardContent>
-        </Card>
-    )
-}
 
 type WeightBalancerMode = "objectives" | "strategicActions" | "metricsAndTasks";
 
@@ -277,17 +212,13 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
           </div>
         </DialogHeader>
         <div className="py-4">
-          <Tabs defaultValue="budget">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="budget">የበጀት ማስያ</TabsTrigger>
+          <Tabs defaultValue="objectives">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="objectives">የዓላማ ክብደት</TabsTrigger>
               <TabsTrigger value="actions">የእርምጃ ክብደት</TabsTrigger>
               <TabsTrigger value="metrics">መለኪያ/ተግባር ክብደት</TabsTrigger>
               <TabsTrigger value="simple-calc">ቀላል ማስያ</TabsTrigger>
             </TabsList>
-            <TabsContent value="budget" className="pt-4">
-              <BudgetCalculator form={form} />
-            </TabsContent>
             <TabsContent value="objectives" className="pt-4">
                 <WeightBalancer
                     title="የዓላማ ክብደት ማመጣጠኛ"
@@ -321,5 +252,3 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
     </Dialog>
   );
 }
-
-    
