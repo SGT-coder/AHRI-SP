@@ -1,15 +1,35 @@
 
 'use server';
 
+import { promises as fs } from 'fs';
+import path from 'path';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { strategicPlanSchema, type StrategicPlanFormValues, updateProfileSchema, changePasswordSchema, adminAddUserSchema, type AdminAddUserFormValues, resetPasswordSchema } from '@/lib/schemas';
 import type { Submission, SubmissionStatus, User, UserStatus, Role } from '@/lib/types';
-import { initialSubmissions, initialUsers } from '@/lib/data';
 
-// In-memory database
-let submissions: Submission[] = JSON.parse(JSON.stringify(initialSubmissions));
-let users: User[] = JSON.parse(JSON.stringify(initialUsers));
+// Path to the db.json file
+const dbPath = path.join(process.cwd(), 'db.json');
+
+// --- Database Helper Functions ---
+
+async function readDb(): Promise<{ submissions: Submission[], users: User[] }> {
+    try {
+        const data = await fs.readFile(dbPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        // If the file doesn't exist or is empty, return a default structure
+        if (error.code === 'ENOENT' || error.name === 'SyntaxError') {
+            return { submissions: [], users: [] };
+        }
+        throw error;
+    }
+}
+
+async function writeDb(data: { submissions: Submission[], users: User[] }): Promise<void> {
+    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
 
 const statusTranslations: Record<UserStatus | SubmissionStatus, string> = {
     Approved: "ጸድቋል",
@@ -36,6 +56,7 @@ export async function loginUser(credentials: z.infer<typeof loginSchema>) {
         return { success: false, message: 'የተሳሳተ መረጃ ቀርቧል።' };
     }
 
+    const { users } = await readDb();
     const { email, password, role } = parsedCredentials.data;
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
@@ -79,8 +100,9 @@ export async function registerUser(data: z.infer<typeof registerSchema>) {
     }
     
     const { fullName, email, password } = parsedData.data;
+    const db = await readDb();
 
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const existingUser = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (existingUser) {
         return { success: false, message: 'በዚህ ኢሜይል አስቀድሞ የተመዘገበ መለያ አለ።' };
     }
@@ -96,7 +118,8 @@ export async function registerUser(data: z.infer<typeof registerSchema>) {
         statusUpdatedAt: new Date().toISOString(),
     };
 
-    users.push(newUser);
+    db.users.push(newUser);
+    await writeDb(db);
     
     return { success: true, message: 'ምዝገባው ተሳክቷል! መለያዎ የአስተዳዳሪ ይሁንታ በመጠበቅ ላይ ነው።' };
 }
@@ -110,7 +133,8 @@ export async function requestPasswordReset(data: z.infer<typeof resetPasswordSch
     }
 
     const { fullName, email } = parsedData.data;
-    const userIndex = users.findIndex(u => 
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => 
         u.email.toLowerCase() === email.toLowerCase() && 
         u.name.trim().toLowerCase() === fullName.trim().toLowerCase()
     );
@@ -119,17 +143,19 @@ export async function requestPasswordReset(data: z.infer<typeof resetPasswordSch
         return { success: false, message: "በዚያ ስም እና የኢሜይል አድራሻ የተመዘገበ መለያ የለም።" };
     }
     
-    const user = users[userIndex];
+    const user = db.users[userIndex];
 
     if (user.role === 'Admin') {
         user.passwordResetStatus = 'Pending';
         user.statusUpdatedAt = new Date().toISOString();
+        await writeDb(db);
         return { success: true, message: "የይለፍ ቃል ዳግም ማስጀመሪያ ጥያቄዎ ለአስተዳዳሪ ተልኳል።", isAdminRequest: true };
     }
 
     const newPassword = Math.random().toString(36).substring(2, 10);
     user.password = newPassword;
     user.statusUpdatedAt = new Date().toISOString();
+    await writeDb(db);
     
     return { success: true, newPassword, message: "አዲስ የይለፍ ቃል ተፈጥሯል።", isAdminRequest: false };
 }
@@ -138,6 +164,7 @@ export async function requestPasswordReset(data: z.infer<typeof resetPasswordSch
 // --- Admin Actions ---
 
 export async function getUsers(): Promise<User[]> {
+    const { users } = await readDb();
     // Return all users without their passwords
     return users.map(({ password, ...user }) => user);
 }
@@ -151,8 +178,9 @@ export async function adminAddUser(data: AdminAddUserFormValues) {
     }
     
     const { name, email, password, role } = parsedData.data;
+    const db = await readDb();
 
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const existingUser = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (existingUser) {
         return { success: false, message: 'በዚህ ኢሜይል አስቀድሞ የተመዘገበ መለያ አለ።' };
     }
@@ -168,7 +196,8 @@ export async function adminAddUser(data: AdminAddUserFormValues) {
         statusUpdatedAt: new Date().toISOString(),
     };
 
-    users.push(newUser);
+    db.users.push(newUser);
+    await writeDb(db);
 
     const { password: _, ...userWithoutPassword } = newUser;
     return { success: true, message: 'ተጠቃሚው በተሳካ ሁኔታ ተፈጥሯል።', user: userWithoutPassword };
@@ -176,25 +205,29 @@ export async function adminAddUser(data: AdminAddUserFormValues) {
 
 
 export async function updateUserStatus(userId: string, status: UserStatus) {
-    const userIndex = users.findIndex(u => u.id === userId);
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
         return { success: false, message: "ተጠቃሚው አልተገኘም።" };
     }
 
-    users[userIndex].status = status;
-    users[userIndex].statusUpdatedAt = new Date().toISOString();
+    db.users[userIndex].status = status;
+    db.users[userIndex].statusUpdatedAt = new Date().toISOString();
+    await writeDb(db);
     const translatedStatus = statusTranslations[status] || status;
     return { success: true, message: `የተጠቃሚው ሁኔታ ወደ '${translatedStatus}' ተቀይሯል።`};
 }
 
 export async function deleteUser(userId: string) {
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== userId);
+    const db = await readDb();
+    const initialLength = db.users.length;
+    db.users = db.users.filter(u => u.id !== userId);
 
-    if (users.length === initialLength) {
+    if (db.users.length === initialLength) {
         return { success: false, message: "ተጠቃሚው አልተገኘም።" };
     }
+    await writeDb(db);
     return { success: true, message: "ተጠቃሚው በተሳካ ሁኔታ ተሰርዟል።"};
 }
 
@@ -204,29 +237,33 @@ export async function approvePasswordReset(userId: string, adminId: string) {
         return { success: false, message: "የራስዎን የይለፍ ቃል ዳግም ማስጀመሪያ ጥያቄ ማጽደቅ አይችሉም።" };
     }
     
-    const userIndex = users.findIndex(u => u.id === userId);
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => u.id === userId);
 
-    if (userIndex === -1 || users[userIndex].passwordResetStatus !== 'Pending') {
+    if (userIndex === -1 || db.users[userIndex].passwordResetStatus !== 'Pending') {
         return { success: false, message: "የሚጸድቅ የይለፍ ቃል ዳግም ማስጀመሪያ ጥያቄ አልተገኘም።" };
     }
 
     const newPassword = 'ahri123';
-    users[userIndex].password = newPassword;
-    users[userIndex].passwordResetStatus = undefined;
-    users[userIndex].statusUpdatedAt = new Date().toISOString();
+    db.users[userIndex].password = newPassword;
+    db.users[userIndex].passwordResetStatus = undefined;
+    db.users[userIndex].statusUpdatedAt = new Date().toISOString();
+    await writeDb(db);
 
     return { success: true, newPassword, message: "የይለፍ ቃል ዳግም ማስጀመር ጸድቋል። አዲሱ የይለፍ ቃል ለተጠቃሚው ደህንነቱ በተጠበቀ ሁኔታ መላክ አለበት።" };
 }
 
 export async function rejectPasswordReset(userId: string) {
-    const userIndex = users.findIndex(u => u.id === userId);
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => u.id === userId);
 
-    if (userIndex === -1 || users[userIndex].passwordResetStatus !== 'Pending') {
+    if (userIndex === -1 || db.users[userIndex].passwordResetStatus !== 'Pending') {
         return { success: false, message: "ውድቅ የሚደረግ የይለፍ ቃል ዳግም ማስጀመሪያ ጥያቄ አልተገኘም።" };
     }
     
-    users[userIndex].passwordResetStatus = undefined;
-    users[userIndex].statusUpdatedAt = new Date().toISOString();
+    db.users[userIndex].passwordResetStatus = undefined;
+    db.users[userIndex].statusUpdatedAt = new Date().toISOString();
+    await writeDb(db);
 
     return { success: true, message: "የይለፍ ቃል ዳግም ማስጀመሪያ ጥያቄ ውድቅ ተደርጓል።" };
 }
@@ -241,21 +278,23 @@ export async function updateUserProfile(userId: string, data: z.infer<typeof upd
     }
 
     const { name, email } = parsedData.data;
-    const userIndex = users.findIndex(u => u.id === userId);
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
         return { success: false, message: "ተጠቃሚው አልተገኘም።" };
     }
 
     // Check if another user already has the new email
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== userId)) {
+    if (db.users.some(u => u.email.toLowerCase() === email.toLowerCase() && u.id !== userId)) {
         return { success: false, message: "ይህ ኢሜይል አስቀድሞ በሌላ መለያ ጥቅም ላይ ውሏል።" };
     }
 
-    users[userIndex].name = name;
-    users[userIndex].email = email;
+    db.users[userIndex].name = name;
+    db.users[userIndex].email = email;
+    await writeDb(db);
 
-    const { password, ...updatedUser } = users[userIndex];
+    const { password, ...updatedUser } = db.users[userIndex];
     return { success: true, message: "መረጃዎ በተሳካ ሁኔታ ተቀይሯል።", user: updatedUser };
 }
 
@@ -269,17 +308,19 @@ export async function changeUserPassword(userId: string, data: z.infer<typeof ch
     }
 
     const { oldPassword, newPassword } = parsedData.data;
-    const userIndex = users.findIndex(u => u.id === userId);
+    const db = await readDb();
+    const userIndex = db.users.findIndex(u => u.id === userId);
 
     if (userIndex === -1) {
         return { success: false, message: "ተጠቃሚው አልተገኘም።" };
     }
 
-    if (users[userIndex].password !== oldPassword) {
+    if (db.users[userIndex].password !== oldPassword) {
         return { success: false, message: "የድሮ የይለፍ ቃልዎ ትክክል አይደለም።" };
     }
 
-    users[userIndex].password = newPassword;
+    db.users[userIndex].password = newPassword;
+    await writeDb(db);
 
     return { success: true, message: "የይለፍ ቃልዎ በተሳካ ሁኔታ ተቀይሯል።" };
 }
@@ -298,6 +339,7 @@ function generateTrackingId(): string {
 }
 
 export async function getSubmissions(): Promise<Submission[]> {
+    const { submissions } = await readDb();
     // Sort submissions by date, newest first
     return [...submissions].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
 }
@@ -307,6 +349,7 @@ export async function getSubmissionById(id: string): Promise<{ success: boolean;
     if (!id || typeof id !== 'string' || id.trim() === '') {
         return { success: false, message: "የመከታተያ መታወቂያ ያስፈልጋል።" };
     }
+    const { submissions } = await readDb();
     const submission = submissions.find(s => s.id.toLowerCase() === id.toLowerCase());
 
     if (submission) {
@@ -328,6 +371,7 @@ export async function trackSubmission(data: z.infer<typeof trackSubmissionSchema
     }
 
     const { trackingId, userName } = parsedData.data;
+    const { submissions } = await readDb();
 
     const submission = submissions.find(s => 
         s.id.toLowerCase() === trackingId.toLowerCase() && 
@@ -353,6 +397,7 @@ export async function addSubmission(data: StrategicPlanFormValues) {
         return { success: false, message: finalMessage || "የገባው መረጃ ትክክል አይደለም።", errors: parsedData.error.flatten() };
     }
     
+    const db = await readDb();
     const newId = generateTrackingId();
     const newSubmission: Submission = {
         id: newId,
@@ -363,7 +408,8 @@ export async function addSubmission(data: StrategicPlanFormValues) {
         ...parsedData.data, // This now includes userName
     };
     
-    submissions.push(newSubmission);
+    db.submissions.push(newSubmission);
+    await writeDb(db);
     return { success: true, submission: newSubmission, message: "ዕቅድ በተሳካ ሁኔታ ገብቷል!" };
 }
 
@@ -378,25 +424,28 @@ export async function updateSubmission(id: string, data: StrategicPlanFormValues
         return { success: false, message: finalMessage || "የገባው መረጃ ትክክል አይደለም።", errors: parsedData.error.flatten() };
     }
 
-    const submissionIndex = submissions.findIndex(s => s.id === id);
+    const db = await readDb();
+    const submissionIndex = db.submissions.findIndex(s => s.id === id);
 
     if (submissionIndex === -1) {
         return { success: false, message: "ማመልከቻው አልተገኘም።" };
     }
 
     const updatedSubmission: Submission = {
-        ...submissions[submissionIndex],
+        ...db.submissions[submissionIndex],
         ...parsedData.data,
         status: 'Pending' as SubmissionStatus,
         lastModifiedAt: new Date().toISOString(),
     };
 
-    submissions[submissionIndex] = updatedSubmission;
+    db.submissions[submissionIndex] = updatedSubmission;
+    await writeDb(db);
     return { success: true, submission: updatedSubmission, message: "ዕቅድ በተሳካ ሁኔታ ተስተካክሏል!" };
 }
 
 export async function updateSubmissionStatus(id: string, status: SubmissionStatus, comments?: string) {
-    const submissionIndex = submissions.findIndex(s => s.id === id);
+    const db = await readDb();
+    const submissionIndex = db.submissions.findIndex(s => s.id === id);
 
     if (submissionIndex === -1) {
         return { success: false, message: "ማመልከቻው አልተገኘም።" };
@@ -411,18 +460,21 @@ export async function updateSubmissionStatus(id: string, status: SubmissionStatu
         statusUpdate.comments = comments;
     }
 
-    submissions[submissionIndex] = { ...submissions[submissionIndex], ...statusUpdate };
+    db.submissions[submissionIndex] = { ...db.submissions[submissionIndex], ...statusUpdate };
+    await writeDb(db);
     const translatedStatus = statusTranslations[status] || status;
     return { success: true, message: `ሁኔታው ወደ '${translatedStatus}' ተቀይሯል` };
 }
 
 export async function deleteSubmission(id: string) {
-    const initialLength = submissions.length;
-    submissions = submissions.filter(s => s.id !== id);
+    const db = await readDb();
+    const initialLength = db.submissions.length;
+    db.submissions = db.submissions.filter(s => s.id !== id);
     
-    if (submissions.length === initialLength) {
+    if (db.submissions.length === initialLength) {
             return { success: false, message: "ለመሰረዝ ማመልከቻ አልተገኘም።" };
     }
 
+    await writeDb(db);
     return { success: true, message: "ማመልከቻው ተሰርዟል።" };
 }

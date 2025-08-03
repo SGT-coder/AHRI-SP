@@ -1,6 +1,10 @@
 
 import type { Submission, User } from '@/lib/types';
 
+// This file is no longer the source of truth. The application now reads from and writes to db.json directly.
+// These arrays can be kept for reference or for seeding the database if it's empty,
+// but they are not actively used by the application logic anymore.
+
 export const initialUsers: User[] = [
     {
       "id": "admin-001",
