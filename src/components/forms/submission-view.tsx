@@ -116,26 +116,31 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                     obj.grantBudgetAmount,
                     obj.sdgBudgetAmount
                 ].reduce((acc, amount) => acc + (Number(amount) || 0), 0);
+                const objectiveNumber = `2.${index + 1}`;
 
                 return (
                 <div key={index} className="p-4 border rounded-lg bg-slate-50/50">
                     <div className="flex justify-between items-baseline mb-4">
-                        <h3 className="font-headline text-xl text-primary">{obj.objective}</h3>
+                        <h3 className="font-headline text-xl text-primary">{objectiveNumber}. {obj.objective}</h3>
                         <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.objectiveWeight}%</span></p>
                     </div>
 
                     <Accordion type="single" collapsible className="w-full">
-                         {obj.strategicActions?.map((action, actionIndex) => (
+                         {obj.strategicActions?.map((action, actionIndex) => {
+                             const actionNumber = `${objectiveNumber}.${actionIndex + 1}`;
+                             return (
                             <AccordionItem value={`action-${actionIndex}`} key={actionIndex}>
                                 <AccordionTrigger className="font-semibold text-lg hover:no-underline">
-                                    {action.action}
+                                    {actionNumber}. {action.action}
                                     <span className="text-base font-mono text-muted-foreground ml-4">(የእርምጃ ክብደት: {action.weight}%)</span>
                                 </AccordionTrigger>
                                 <AccordionContent className="pl-4">
-                                     {action.metrics.map((metric, metricIndex) => (
+                                     {action.metrics.map((metric, metricIndex) => {
+                                         const metricNumber = `${actionNumber}.${metricIndex + 1}`;
+                                         return (
                                         <div key={metricIndex} className="p-4 mt-2 border rounded-md bg-white">
                                             <div className="flex justify-between items-baseline mb-2">
-                                                <h5 className="font-semibold">{metric.metric}</h5>
+                                                <h5 className="font-semibold">{metricNumber}. {metric.metric}</h5>
                                                 <span className="text-sm font-mono text-muted-foreground">(የመለኪያ ክብደት: {metric.weight}%)</span>
                                             </div>
                                             <Table>
@@ -149,7 +154,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                                                 <TableBody>
                                                     {metric.mainTasks.map((task, taskIndex) => (
                                                         <TableRow key={taskIndex}>
-                                                            <TableCell>{task.task}</TableCell>
+                                                            <TableCell>{metricNumber}.{taskIndex + 1}. {task.task}</TableCell>
                                                             <TableCell>{task.target}</TableCell>
                                                             <TableCell className="text-right font-mono">{task.weight}%</TableCell>
                                                         </TableRow>
@@ -157,25 +162,25 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                                                 </TableBody>
                                             </Table>
                                         </div>
-                                     ))}
+                                     )})}
                                 </AccordionContent>
                             </AccordionItem>
-                        ))}
+                        )})}
                     </Accordion>
 
                     <Separator className="my-6" />
                     
                     <Card>
-                        <CardHeader><CardTitle className="font-headline text-lg">አፈጻጸም እና በጀት</CardTitle></CardHeader>
+                        <CardHeader><CardTitle className="font-headline text-lg">{objectiveNumber}.2. አፈጻጸም እና በጀት</CardTitle></CardHeader>
                         <CardContent>
                             <dl className="divide-y">
                                 <DescriptionListItem term="ፈጻሚ አካል">{obj.executingBody}</DescriptionListItem>
                                 <DescriptionListItem term="የሚከናወንበት ጊዜ">{obj.executionTime}</DescriptionListItem>
                                 <DescriptionListItem term="በጀት ምንጭ">{obj.budgetSource}</DescriptionListItem>
-                                <DescriptionListItem term="ከመንግስት በጀት በብር">{obj.governmentBudgetAmount}</DescriptionListItem>
+                                <DescriptionListItem term="ከመንግስት በጀት በብር">{obj.governmentBudgetAmount ? Number(obj.governmentBudgetAmount).toLocaleString() : ''}</DescriptionListItem>
                                 <DescriptionListItem term="ከመንግስት በጀት ኮድ">{obj.governmentBudgetCode}</DescriptionListItem>
-                                <DescriptionListItem term="ከግራንት በጀት በብር">{obj.grantBudgetAmount}</DescriptionListItem>
-                                <DescriptionListItem term="ከኢስ ዲ ጂ በጀት በብር">{obj.sdgBudgetAmount}</DescriptionListItem>
+                                <DescriptionListItem term="ከግራንት በጀት በብር">{obj.grantBudgetAmount ? Number(obj.grantBudgetAmount).toLocaleString() : ''}</DescriptionListItem>
+                                <DescriptionListItem term="ከኢስ ዲ ጂ በጀት በብር">{obj.sdgBudgetAmount ? Number(obj.sdgBudgetAmount).toLocaleString() : ''}</DescriptionListItem>
                             </dl>
                         </CardContent>
                         <CardFooter className="text-right">
@@ -230,3 +235,5 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
     </div>
   );
 }
+
+    
