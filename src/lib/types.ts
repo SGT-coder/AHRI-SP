@@ -31,3 +31,5 @@ export interface User {
   statusUpdatedAt: string;
   passwordResetStatus?: 'Pending' | null;
 }
+
+    

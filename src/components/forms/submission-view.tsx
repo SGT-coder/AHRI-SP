@@ -110,7 +110,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
       <Card>
         <CardHeader><CardTitle className="font-headline">ዝርዝር ዕቅድ</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-            {submission.objectives?.map((obj, index) => {
+            {(submission.objectives || []).map((obj, index) => {
                  const totalBudget = [
                     obj.governmentBudgetAmount,
                     obj.grantBudgetAmount,
@@ -126,7 +126,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                     </div>
 
                     <Accordion type="single" collapsible className="w-full">
-                         {obj.strategicActions?.map((action, actionIndex) => {
+                         {(obj.strategicActions || []).map((action, actionIndex) => {
                              const actionNumber = `${objectiveNumber}.${actionIndex + 1}`;
                              return (
                             <AccordionItem value={`action-${actionIndex}`} key={actionIndex}>
@@ -135,7 +135,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                                     <span className="text-base font-mono text-muted-foreground ml-4">(የእርምጃ ክብደት: {action.weight}%)</span>
                                 </AccordionTrigger>
                                 <AccordionContent className="pl-4">
-                                     {action.metrics.map((metric, metricIndex) => {
+                                     {(action.metrics || []).map((metric, metricIndex) => {
                                          const metricNumber = `${actionNumber}.${metricIndex + 1}`;
                                          return (
                                         <div key={metricIndex} className="p-4 mt-2 border rounded-md bg-white">
@@ -152,10 +152,10 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {metric.mainTasks.map((task, taskIndex) => (
+                                                    {(metric.mainTasks || []).map((task, taskIndex) => (
                                                         <TableRow key={taskIndex}>
                                                             <TableCell>{metricNumber}.{taskIndex + 1}. {task.task}</TableCell>
-                                                            <TableCell>{task.target}</TableCell>
+                                                            <TableCell>{task.target}%</TableCell>
                                                             <TableCell className="text-right font-mono">{task.weight}%</TableCell>
                                                         </TableRow>
                                                     ))}
