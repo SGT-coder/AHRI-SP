@@ -17,15 +17,6 @@ const metricSchema = z.object({
     metric: z.string().min(1, "የመለኪያ መግለጫ ያስፈልጋል።"),
     weight: weightSchema,
     mainTasks: z.array(mainTaskSchema).min(1, "ቢያንስ አንድ ዋና ተግባር ያስፈልጋል።"),
-}).superRefine((data, ctx) => {
-    const totalWeight = data.mainTasks.reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
-    if (Math.abs(totalWeight - 100) > 0.01) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `የዋና ተግባራት ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
-            path: ['mainTasks'],
-        });
-    }
 });
 
 const strategicActionSchema = z.object({
@@ -33,11 +24,14 @@ const strategicActionSchema = z.object({
     weight: weightSchema,
     metrics: z.array(metricSchema).min(1, "ቢያንስ አንድ መለኪያ ያስፈልጋል።"),
 }).superRefine((data, ctx) => {
-    const totalWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
-    if (Math.abs(totalWeight - 100) > 0.01) {
+    const totalMetricsWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
+    const totalTasksWeight = data.metrics.flatMap(m => m.mainTasks).reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
+    const combinedWeight = totalMetricsWeight + totalTasksWeight;
+
+    if (Math.abs(combinedWeight - 100) > 0.01) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `የመለኪያዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
+            message: `የመለኪያዎች እና የተግባራት ክብደት ድምር ለእያንዳንዱ ስትራቴጂክ እርምጃ 100% መሆን አለበት። የአሁኑ ድምር ${combinedWeight.toFixed(2)}% ነው።`,
             path: ['metrics'],
         });
     }
@@ -95,9 +89,7 @@ export const strategicPlanSchema = z.object({
     }
 
     // Validate total strategic action weights across the entire form
-    const totalStrategicActionWeight = data.objectives.reduce((acc, obj) => {
-        return acc + obj.strategicActions.reduce((actionAcc, action) => actionAcc + (parseFloat(action.weight) || 0), 0);
-    }, 0);
+    const totalStrategicActionWeight = data.objectives.flatMap(obj => obj.strategicActions).reduce((acc, action) => acc + (parseFloat(action.weight) || 0), 0);
     if (Math.abs(totalStrategicActionWeight - 100) > 0.01) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
