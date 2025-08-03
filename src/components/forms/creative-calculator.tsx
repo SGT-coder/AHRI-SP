@@ -40,8 +40,13 @@ const BudgetCalculator = ({ form }: { form: UseFormReturn<StrategicPlanFormValue
 
     const manualTotal = entries.reduce((acc, entry) => acc + entry.amount, 0);
 
-    const formBudgetValues = form.watch(["governmentBudgetAmount", "grantBudgetAmount", "sdgBudgetAmount"]);
-    const formTotal = formBudgetValues.reduce((acc, val) => acc + (parseFloat(val || '0') || 0), 0);
+    const watchedObjectives = form.watch("objectives");
+    const formTotal = watchedObjectives.reduce((totalAcc, objective) => {
+        const gov = parseFloat(objective.governmentBudgetAmount || '0') || 0;
+        const grant = parseFloat(objective.grantBudgetAmount || '0') || 0;
+        const sdg = parseFloat(objective.sdgBudgetAmount || '0') || 0;
+        return totalAcc + gov + grant + sdg;
+    }, 0);
 
     return (
         <Card>
@@ -81,23 +86,25 @@ const BudgetCalculator = ({ form }: { form: UseFormReturn<StrategicPlanFormValue
     )
 }
 
+type WeightBalancerMode = "objectives" | "strategicActions" | "metricsAndTasks";
+
 const WeightBalancer = ({ 
     title,
     description,
     form,
-    fieldArrayName,
+    mode,
 }: { 
     title: string,
     description: string,
     form: UseFormReturn<StrategicPlanFormValues>,
-    fieldArrayName: "objectives" | "strategicActions",
+    mode: WeightBalancerMode,
 }) => {
     const objectives = form.watch("objectives");
     
     let totalWeight = 0;
-    let itemsToUpdate: {path: any, value: number}[] = [];
+    let itemsToUpdate: {path: string, value: number}[] = [];
 
-    if (fieldArrayName === "objectives") {
+    if (mode === "objectives") {
         totalWeight = objectives.reduce((acc, obj) => acc + (parseFloat(obj.objectiveWeight) || 0), 0);
         objectives.forEach((obj, index) => {
             const value = parseFloat(obj.objectiveWeight) || 0;
@@ -105,7 +112,7 @@ const WeightBalancer = ({
                  itemsToUpdate.push({ path: `objectives.${index}.objectiveWeight`, value });
             }
         });
-    } else { // For strategic actions, sum across ALL objectives
+    } else if (mode === "strategicActions") {
         totalWeight = objectives.reduce((acc, obj) => 
             acc + obj.strategicActions.reduce((actAcc, action) => actAcc + (parseFloat(action.weight) || 0), 0)
         , 0);
@@ -118,6 +125,25 @@ const WeightBalancer = ({
                 }
             });
         });
+    } else if (mode === "metricsAndTasks") {
+         objectives.forEach((obj, objIndex) => {
+            obj.strategicActions.forEach((action, actIndex) => {
+                action.metrics.forEach((metric, metricIndex) => {
+                    const metricValue = parseFloat(metric.weight) || 0;
+                    if(metricValue > 0) {
+                        itemsToUpdate.push({ path: `objectives.${objIndex}.strategicActions.${actIndex}.metrics.${metricIndex}.weight`, value: metricValue });
+                        totalWeight += metricValue;
+                    }
+                    metric.mainTasks.forEach((task, taskIndex) => {
+                         const taskValue = parseFloat(task.weight) || 0;
+                         if(taskValue > 0) {
+                             itemsToUpdate.push({ path: `objectives.${objIndex}.strategicActions.${actIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.weight`, value: taskValue });
+                             totalWeight += taskValue;
+                         }
+                    })
+                });
+            });
+        });
     }
     
     const handleNormalize = () => {
@@ -125,7 +151,7 @@ const WeightBalancer = ({
         
         itemsToUpdate.forEach(item => {
             const normalizedValue = (item.value / totalWeight) * 100;
-            form.setValue(item.path, normalizedValue.toFixed(2), { shouldValidate: true });
+            form.setValue(item.path as any, normalizedValue.toFixed(2), { shouldValidate: true });
         });
     };
     
@@ -158,7 +184,10 @@ const SimpleCalculator = () => {
     const [result, setResult] = React.useState<string>("");
 
     const handleInput = (value: string) => {
-        if (result !== "") {
+        if (result !== "" && !["+", "-", "*", "/"].includes(value)) {
+           setInput(value);
+           setResult("");
+        } else if (result !== "" && ["+", "-", "*", "/"].includes(value)) {
             setInput(result + value);
             setResult("");
         } else {
@@ -249,10 +278,11 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
         </DialogHeader>
         <div className="py-4">
           <Tabs defaultValue="budget">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="budget">የበጀት ማስያ</TabsTrigger>
               <TabsTrigger value="objectives">የዓላማ ክብደት</TabsTrigger>
               <TabsTrigger value="actions">የእርምጃ ክብደት</TabsTrigger>
+              <TabsTrigger value="metrics">መለኪያ/ተግባር ክብደት</TabsTrigger>
               <TabsTrigger value="simple-calc">ቀላል ማስያ</TabsTrigger>
             </TabsList>
             <TabsContent value="budget" className="pt-4">
@@ -263,7 +293,7 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
                     title="የዓላማ ክብደት ማመጣጠኛ"
                     description="የሁሉም ዓላማዎችዎ ጠቅላላ ክብደት 100% መሆኑን ያረጋግጡ።"
                     form={form}
-                    fieldArrayName="objectives"
+                    mode="objectives"
                 />
             </TabsContent>
             <TabsContent value="actions" className="pt-4">
@@ -271,7 +301,15 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
                     title="የስትራቴጂክ እርምጃ ክብደት ማመጣጠኛ"
                     description="የሁሉም ስትራቴጂክ እርምጃዎችዎ ጠቅላላ ክብደት 100% መሆኑን ያረጋግጡ።"
                     form={form}
-                    fieldArrayName="strategicActions"
+                    mode="strategicActions"
+                />
+            </TabsContent>
+            <TabsContent value="metrics" className="pt-4">
+                <WeightBalancer
+                    title="የመለኪያ እና የተግባር ክብደት ማመጣጠኛ"
+                    description="የሁሉም መለኪያዎች እና ዋና ተግባራትዎ ጠቅላላ ክብደት 100% መሆኑን ያረጋግጡ።"
+                    form={form}
+                    mode="metricsAndTasks"
                 />
             </TabsContent>
             <TabsContent value="simple-calc" className="pt-4">
@@ -283,3 +321,5 @@ export function CreativeCalculator({ isOpen, onOpenChange, form }: { isOpen: boo
     </Dialog>
   );
 }
+
+    

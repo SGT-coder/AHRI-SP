@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, Control } from "react-hook-form";
+import { useForm, useFieldArray, Control, useWatch } from "react-hook-form";
 import { Loader2, PlusCircle, Trash2, Calculator } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -224,7 +224,11 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
         name: `objectives.${objectiveIndex}.strategicActions`,
     });
     
-    const budgetSource = control.getFieldState(`objectives.${objectiveIndex}.budgetSource`).isTouched ? control.getValues(`objectives.${objectiveIndex}.budgetSource`) : "";
+    const budgetSource = useWatch({
+        control,
+        name: `objectives.${objectiveIndex}.budgetSource`,
+    });
+
     const objectiveNumber = `2.${objectiveIndex + 1}`;
 
     return (
@@ -290,7 +294,7 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                 </div>
                 
                 {budgetSource && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                         {budgetSource === 'መንግስት' && (<>
                             <FormField control={control} name={`objectives.${objectiveIndex}.governmentBudgetAmount`} render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት በብር</FormLabel><FormControl><Input type="number" placeholder="ብር" {...field} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={control} name={`objectives.${objectiveIndex}.governmentBudgetCode`} render={({ field }) => (<FormItem><FormLabel>ከመንግስት በጀት ኮድ</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="ኮድ ይምረጡ" /></SelectTrigger></FormControl><SelectContent>{govBudgetCodeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
