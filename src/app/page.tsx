@@ -57,10 +57,7 @@ export default function Home() {
         const users = await fetchUsers();
         setUsers(users);
 
-        if (loggedInUser?.role === 'Admin') {
-            const submissions = await fetchSubmissions();
-            setSubmissions(submissions);
-        } else if (loggedInUser?.role === 'Approver') {
+        if (loggedInUser?.role === 'Admin' || loggedInUser?.role === 'Approver') {
             const submissions = await fetchSubmissions();
             setSubmissions(submissions);
         }
@@ -130,7 +127,7 @@ export default function Home() {
         } else {
             setView('dashboard');
         }
-        toast({ title: "በተሳካ ሁኔታ ገብተዋል", description: `እንኳን ደህና መጡ، ${result.user.name} (${result.translatedRole})!` });
+        toast({ title: "በተሳካ ሁኔታ ገብተዋል", description: `እንኳን ደህና መጡ፣ ${result.user.name} (${result.translatedRole})!` });
         return true;
     } else {
         toast({ title: "መግባት አልተቻለም", description: result.message, variant: "destructive" });
@@ -446,7 +443,7 @@ export default function Home() {
 
   const handleDialogDone = () => {
     setIsTrackingIdDialogOpen(false);
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -455,7 +452,7 @@ export default function Home() {
         onLogout={handleLogout} 
         onGoToSettings={handleGoToSettings} 
         onBack={shouldShowHeaderButton ? handleBack : undefined}
-        onNavigateToAnalytics={loggedInUser?.role === 'Approver' || loggedInUser?.role === 'Admin' ? handleViewAnalytics : undefined}
+        onNavigateToAnalytics={loggedInUser?.role === 'Admin' ? handleViewAnalytics : undefined}
         notificationCount={notificationCount}
         pendingUsers={pendingUsers}
         pendingPasswordResets={pendingPasswordResets}
@@ -478,7 +475,7 @@ export default function Home() {
             </DialogHeader>
             <div className="flex items-center space-x-2 my-4">
                 <Input value={newPassword || ''} readOnly className="font-mono text-lg tracking-wider" />
-                <Button variant="outline" size="icon" onClick={() => {
+                <Button variant="outline" size="icon" onClick={()=>{
                     if(newPassword) navigator.clipboard.writeText(newPassword)
                     toast({ title: "ተቀድቷል!", description: "አዲስ የይለፍ ቃል ወደ ቅንጥብ ሰሌዳ ተቀድቷል።" });
                 }}><Copy className="h-4 w-4" /></Button>

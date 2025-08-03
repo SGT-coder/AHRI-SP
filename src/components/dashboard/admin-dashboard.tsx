@@ -19,7 +19,7 @@ import type { User, UserStatus, Submission, SubmissionStatus } from "@/lib/types
 import { DateDisplay } from "@/components/shared/date-display";
 import { adminAddUserSchema, type AdminAddUserFormValues } from "@/lib/schemas";
 import { Loader2 } from "lucide-react";
-import { StatusBadge as SubmissionStatusBadge } from "@/components/shared/status-badge";
+import { AnalyticsDashboard } from "./analytics-dashboard";
 
 
 interface AdminDashboardProps {
@@ -37,7 +37,6 @@ interface AdminDashboardProps {
 }
 
 type SortableUserColumn = keyof Pick<User, 'name' | 'email' | 'role' | 'status' | 'createdAt' | 'statusUpdatedAt'>;
-type SortableSubmissionColumn = keyof Pick<Submission, 'id' | 'projectTitle' | 'userName' | 'department' | 'submittedAt' | 'status'>;
 
 
 const statusTranslations: Record<UserStatus, string> = {
@@ -164,9 +163,6 @@ export function AdminDashboard({
     onAddUser, 
     onApprovePasswordReset, 
     onRejectPasswordReset,
-    onViewSubmission,
-    onUpdateSubmissionStatus,
-    onDeleteSubmission
 }: AdminDashboardProps) {
 
   const ITEMS_PER_PAGE = 5;
@@ -196,15 +192,6 @@ export function AdminDashboard({
     direction: 'descending',
   });
   
-  // --- State for "Submissions" tab ---
-  const [submissionsSearchTerm, setSubmissionsSearchTerm] = React.useState("");
-  const [submissionsStatusFilter, setSubmissionsStatusFilter] = React.useState<SubmissionStatus | "all">("all");
-  const [submissionsCurrentPage, setSubmissionsCurrentPage] = React.useState(1);
-  const [submissionsSortConfig, setSubmissionsSortConfig] = React.useState<{ key: SortableSubmissionColumn; direction: 'ascending' | 'descending' }>({
-    key: 'submittedAt',
-    direction: 'descending',
-  });
-
   const genericUserSort = (items: User[], config: typeof sortConfig) => {
     const sortableItems = [...items];
     sortableItems.sort((a, b) => {
@@ -226,26 +213,6 @@ export function AdminDashboard({
     return sortableItems;
   }
 
-  const genericSubmissionSort = (items: Submission[], config: typeof submissionsSortConfig) => {
-    const sortableItems = [...items];
-    sortableItems.sort((a, b) => {
-      const aValue = a[config.key];
-      const bValue = b[config.key];
-
-      if (config.key === 'submittedAt') {
-          const dateA = new Date(aValue).getTime();
-          const dateB = new Date(bValue).getTime();
-          if (dateA < dateB) return config.direction === 'ascending' ? -1 : 1;
-          if (dateA > dateB) return config.direction === 'ascending' ? 1 : -1;
-          return 0;
-      }
-
-      if (aValue < bValue) return config.direction === 'ascending' ? -1 : 1;
-      if (aValue > bValue) return config.direction === 'ascending' ? 1 : -1;
-      return 0;
-    });
-    return sortableItems;
-  }
   
   // --- Memoized data for "Requests" tab ---
   const pendingRegistrations = React.useMemo(() => users.filter(u => u.status === 'Pending'), [users]);
@@ -284,20 +251,6 @@ export function AdminDashboard({
   const sortedUsers = React.useMemo(() => genericUserSort(filteredUsers, sortConfig), [filteredUsers, sortConfig]);
   const paginatedUsers = sortedUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  // --- Memoized data for "Submissions" tab ---
-    const filteredSubmissions = React.useMemo(() => {
-        return (submissions || [])
-            .filter((sub) =>
-                sub.projectTitle.toLowerCase().includes(submissionsSearchTerm.toLowerCase()) ||
-                sub.id.toLowerCase().includes(submissionsSearchTerm.toLowerCase()) ||
-                sub.userName.toLowerCase().includes(submissionsSearchTerm.toLowerCase())
-            )
-            .filter((sub) => submissionsStatusFilter === "all" ? true : sub.status === submissionsStatusFilter);
-    }, [submissions, submissionsSearchTerm, submissionsStatusFilter]);
-
-  const sortedSubmissions = React.useMemo(() => genericSubmissionSort(filteredSubmissions, submissionsSortConfig), [filteredSubmissions, submissionsSortConfig]);
-  const paginatedSubmissions = sortedSubmissions.slice((submissionsCurrentPage - 1) * ITEMS_PER_PAGE, submissionsCurrentPage * ITEMS_PER_PAGE);
-
 
   // --- Generic sort request handler ---
   const createUserSortRequestHandler = (
@@ -310,24 +263,13 @@ export function AdminDashboard({
     }
     setConfig({ key, direction });
   };
-   const createSubmissionSortRequestHandler = (
-    config: typeof submissionsSortConfig,
-    setConfig: React.Dispatch<React.SetStateAction<typeof submissionsSortConfig>>
-  ) => (key: SortableSubmissionColumn) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-    if (config && config.key === key && config.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setConfig({ key, direction });
-  };
-  
+   
   const requestSort = createUserSortRequestHandler(sortConfig, setSortConfig);
   const requestRequestsSort = createUserSortRequestHandler(requestsSortConfig, setRequestsSortConfig);
   const requestPasswordResetSort = createUserSortRequestHandler(passwordResetRequestsSortConfig, setPasswordResetRequestsSortConfig);
-  const requestSubmissionsSort = createSubmissionSortRequestHandler(submissionsSortConfig, setSubmissionsSortConfig);
 
   
-  const getSortIcon = (columnKey: SortableUserColumn | SortableSubmissionColumn, currentConfig: any) => {
+  const getSortIcon = (columnKey: SortableUserColumn, currentConfig: any) => {
     if (!currentConfig || currentConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground/70" />;
     return currentConfig.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
   };
@@ -335,19 +277,9 @@ export function AdminDashboard({
   React.useEffect(() => { setCurrentPage(1); }, [searchTerm, roleFilter, statusFilter]);
   React.useEffect(() => { setRequestsCurrentPage(1); }, [requestsSearchTerm]);
   React.useEffect(() => { setPasswordResetRequestsCurrentPage(1); }, [passwordResetRequestsSearchTerm]);
-  React.useEffect(() => { setSubmissionsCurrentPage(1); }, [submissionsSearchTerm, submissionsStatusFilter]);
 
   
   const SortableUserHeader = ({ column, label, config, onRequestSort }: { column: SortableUserColumn, label: string, config: typeof sortConfig, onRequestSort: (key: SortableUserColumn) => void }) => (
-    <TableHead>
-        <Button variant="ghost" onClick={() => onRequestSort(column)} className="px-2">
-            {label}
-            {getSortIcon(column, config)}
-        </Button>
-    </TableHead>
-  );
-
-  const SortableSubmissionHeader = ({ column, label, config, onRequestSort }: { column: SortableSubmissionColumn, label: string, config: typeof submissionsSortConfig, onRequestSort: (key: SortableSubmissionColumn) => void }) => (
     <TableHead>
         <Button variant="ghost" onClick={() => onRequestSort(column)} className="px-2">
             {label}
@@ -361,14 +293,14 @@ export function AdminDashboard({
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold font-headline">የአስተዳዳሪ ዳሽቦርድ</h1>
-        <p className="text-muted-foreground">የተጠቃሚ መለያዎችን፣ ጥያቄዎችን እና ታሪክን ያስተዳድሩ።</p>
+        <p className="text-muted-foreground">የተጠቃሚ መለያዎችን፣ ጥያቄዎችን እና የስርዓት እንቅስቃሴን ያስተዳድሩ።</p>
       </div>
 
       <Tabs defaultValue="requests">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="requests">ጥያቄዎች</TabsTrigger>
           <TabsTrigger value="users">ተጠቃሚዎች</TabsTrigger>
-          <TabsTrigger value="submissions">ማመልከቻዎች</TabsTrigger>
+          <TabsTrigger value="analytics">ትንታኔ</TabsTrigger>
         </TabsList>
         
         <TabsContent value="requests" className="space-y-6">
@@ -536,79 +468,8 @@ export function AdminDashboard({
             </Card>
         </TabsContent>
 
-        <TabsContent value="submissions">
-            <Card>
-                <CardHeader>
-                    <CardTitle>የማመልከቻ አስተዳደር</CardTitle>
-                    <CardDescription>ሁሉንም ማመልከቻዎች ፈልግ፣ አጣራ እና አስተዳድር።</CardDescription>
-                </CardHeader>
-                 <CardContent>
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="በፕሮጀክት ርዕስ፣ ID ወይም ስም ይፈልጉ..."
-                                value={submissionsSearchTerm}
-                                onChange={(e) => setSubmissionsSearchTerm(e.target.value)}
-                                className="pl-10 w-full"
-                            />
-                        </div>
-                        <Select value={submissionsStatusFilter} onValueChange={(value) => setSubmissionsStatusFilter(value as SubmissionStatus | "all")}>
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="በሁኔታ ማጣሪያ" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">ሁሉም ሁኔታዎች</SelectItem>
-                                <SelectItem value="Pending">በመጠባበቅ ላይ</SelectItem>
-                                <SelectItem value="Approved">ጸድቋል</SelectItem>
-                                <SelectItem value="Rejected">ውድቅ ተደርጓል</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <SortableSubmissionHeader column="id" label="ID" config={submissionsSortConfig} onRequestSort={requestSubmissionsSort}/>
-                                    <SortableSubmissionHeader column="projectTitle" label="የፕሮጀክት ርዕስ" config={submissionsSortConfig} onRequestSort={requestSubmissionsSort}/>
-                                    <SortableSubmissionHeader column="userName" label="ያስገባው" config={submissionsSortConfig} onRequestSort={requestSubmissionsSort}/>
-                                    <SortableSubmissionHeader column="submittedAt" label="የገባበት ቀን" config={submissionsSortConfig} onRequestSort={requestSubmissionsSort}/>
-                                    <SortableSubmissionHeader column="status" label="ሁኔታ" config={submissionsSortConfig} onRequestSort={requestSubmissionsSort}/>
-                                    <TableHead className="text-right">ድርጊቶች</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedSubmissions.length > 0 ? (
-                                paginatedSubmissions.map((sub) => (
-                                    <TableRow key={sub.id}>
-                                        <TableCell className="font-mono text-xs text-muted-foreground">{sub.id}</TableCell>
-                                        <TableCell className="font-medium">{sub.projectTitle}</TableCell>
-                                        <TableCell>{sub.userName}</TableCell>
-                                        <TableCell><DateDisplay dateString={sub.submittedAt} /></TableCell>
-                                        <TableCell><SubmissionStatusBadge status={sub.status} /></TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button size="sm" variant="outline" onClick={() => onViewSubmission(sub.id)}>ይመልከቱ</Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild><Button size="sm" variant="destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader><AlertDialogTitle>እርግጠኛ ነዎት?</AlertDialogTitle><AlertDialogDescription>ይህ ማመልከቻን እስከመጨረሻው ይሰርዘዋል። ይህን እርምጃ መቀልበስ አይቻልም።</AlertDialogDescription></AlertDialogHeader>
-                                                    <AlertDialogFooter><AlertDialogCancel>ይቅር</AlertDialogCancel><AlertDialogAction onClick={() => onDeleteSubmission(sub.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">አዎ፣ ማመልከቻውን ሰርዝ</AlertDialogAction></AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                                ) : (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">ምንም ማመልከቻዎች አልተገኙም።</TableCell>
-                                </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-                <TablePagination itemCount={sortedSubmissions.length} itemsPerPage={ITEMS_PER_PAGE} currentPage={submissionsCurrentPage} onPreviousPage={() => setSubmissionsCurrentPage(p => p - 1)} onNextPage={() => setSubmissionsCurrentPage(p => p + 1)} />
-            </Card>
+        <TabsContent value="analytics">
+           <AnalyticsDashboard submissions={submissions} />
         </TabsContent>
       </Tabs>
     </div>
