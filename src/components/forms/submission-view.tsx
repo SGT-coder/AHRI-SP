@@ -137,7 +137,7 @@ export function SubmissionView({ submission, onUpdateStatus }: SubmissionViewPro
                         <p className="text-lg font-semibold">የዓላማ ክብደት: <span className="font-mono text-primary">{obj.objectiveWeight}%</span></p>
                     </div>
 
-                    <Accordion type="single" collapsible className="w-full">
+                    <Accordion type="multiple" className="w-full">
                          {(obj.strategicActions || []).map((action, actionIndex) => {
                              const actionNumber = `${objectiveNumber}.${actionIndex + 1}`;
                              return (
