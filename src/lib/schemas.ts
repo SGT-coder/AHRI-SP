@@ -23,7 +23,7 @@ const metricSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `የዋና ተግባራት ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
-            path: [],
+            path: ['mainTasks'],
         });
     }
 });
@@ -38,7 +38,7 @@ const strategicActionSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `የመለኪያዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
-            path: [],
+            path: ['metrics'],
         });
     }
 });
@@ -55,14 +55,6 @@ const objectiveSchema = z.object({
     grantBudgetAmount: z.string().optional(),
     sdgBudgetAmount: z.string().optional(),
 }).superRefine((data, ctx) => {
-    const totalWeight = data.strategicActions.reduce((acc, sa) => acc + (parseFloat(sa.weight) || 0), 0);
-    if (Math.abs(totalWeight - 100) > 0.01) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `የስትራቴጂክ እርምጃዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalWeight.toFixed(2)}% ነው።`,
-            path: ['strategicActions'],
-        });
-    }
      if (data.budgetSource === 'መንግስት') {
         if (!data.governmentBudgetAmount || data.governmentBudgetAmount.trim() === '') {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ከመንግስት በጀት መጠን መግባት አለበት።", path: ['governmentBudgetAmount'] });
@@ -89,15 +81,27 @@ export const strategicPlanSchema = z.object({
     projectTitle: z.string({ required_error: "የእቅድ ርዕስ ያስፈልጋል" }).min(1, "የእቅድ ርዕስ ያስፈልጋል"),
     department: z.string({ required_error: "ዲፓርትመንት መምረጥ ያስፈልጋል" }).min(1, "ዲፓርትመንት መምረጥ ያስፈልጋል"),
     goal: z.string({ required_error: "ግብ መምረጥ ያስፈልጋል" }).min(1, "ግብ መምረጥ ያስፈልጋል"),
-    
     objectives: z.array(objectiveSchema).min(1, "ቢያንስ አንድ ዓላማ ያስፈልጋል።"),
 
 }).superRefine((data, ctx) => {
+    // Validate total objective weights across the entire form
     const totalObjectiveWeight = data.objectives.reduce((acc, obj) => acc + (parseFloat(obj.objectiveWeight) || 0), 0);
     if (Math.abs(totalObjectiveWeight - 100) > 0.01) {
          ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `የሁሉም ዓላማ ክብደቶች ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalObjectiveWeight.toFixed(2)}% ነው።`,
+            path: ['objectives'],
+        });
+    }
+
+    // Validate total strategic action weights across the entire form
+    const totalStrategicActionWeight = data.objectives.reduce((acc, obj) => {
+        return acc + obj.strategicActions.reduce((actionAcc, action) => actionAcc + (parseFloat(action.weight) || 0), 0);
+    }, 0);
+    if (Math.abs(totalStrategicActionWeight - 100) > 0.01) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `የሁሉም ስትራቴጂክ እርምጃዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalStrategicActionWeight.toFixed(2)}% ነው።`,
             path: ['objectives'],
         });
     }

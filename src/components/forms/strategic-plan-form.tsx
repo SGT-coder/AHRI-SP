@@ -92,7 +92,7 @@ export function StrategicPlanForm({ submission, onSave, isSubmitting, isReadOnly
     form.reset(submission || defaultFormValues);
   }, [submission, form]);
 
-  const formErrors = form.formState.errors.objectives?.root?.message;
+  const formErrors = form.formState.errors.objectives?.message;
 
   function onSubmit(data: StrategicPlanFormValues) {
     onSave(data, submission?.id);
@@ -257,7 +257,7 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                         <PlusCircle className="mr-2 h-4 w-4" /> ስትራቴጂክ እርምጃ ጨምር
                     </Button>
                 )}
-                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions`).error &&
+                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions`)?.error?.root &&
                      <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions`).error?.root?.message}</FormMessage>
                  }
             </div>
@@ -300,7 +300,7 @@ const ObjectiveField = ({ control, objectiveIndex, removeObjective, isReadOnly }
                     </div>
                 )}
             </div>
-             {control.getFieldState(`objectives.${objectiveIndex}`).error?.root &&
+             {control.getFieldState(`objectives.${objectiveIndex}`)?.error?.root &&
                 <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}`).error?.root?.message}</FormMessage>
             }
         </div>
@@ -343,11 +343,11 @@ const StrategicActionField = ({ control, objectiveIndex, actionIndex, remove, is
                         <PlusCircle className="mr-2 h-4 w-4" /> መለኪያ ጨምር
                     </Button>
                 )}
-                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error &&
+                 {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`)?.error?.root &&
                     <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics`).error?.root?.message}</FormMessage>
                 }
             </div>
-             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error &&
+             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`)?.error?.root &&
                 <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}`).error?.root?.message}</FormMessage>
             }
         </div>
@@ -386,11 +386,14 @@ const MetricsField = ({ control, objectiveIndex, actionIndex, metricIndex, remov
                            <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.weight`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">የተግባር ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የተግባር ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
                            <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">ዒላማ</FormLabel><FormControl><Input placeholder="የተግባር ዒላማ" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
+                          {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks`)?.error?.root &&
+                             <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks`)?.error?.root?.message}</FormMessage>
+                         }
                      </div>
                 ))}
                  {!isReadOnly && <Button type="button" size="sm" variant="outline" onClick={() => append({ task: "", weight: "", target: ""})}><PlusCircle className="mr-2 h-4 w-4" /> ዋና ተግባር ጨምር</Button>}
             </div>
-             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}`).error &&
+             {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}`)?.error?.root &&
                 <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}`).error?.root?.message}</FormMessage>
             }
         </div>
