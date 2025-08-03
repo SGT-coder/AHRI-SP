@@ -248,6 +248,123 @@
       "grantBudgetAmount": "",
       "sdgBudgetAmount": "",
       "comments": "test"
+    },
+    {
+      "id": "TRX-2025-0803-5B96K",
+      "userId": "user1",
+      "status": "Pending",
+      "submittedAt": "2025-08-03T17:18:28.004Z",
+      "lastModifiedAt": "2025-08-03T17:23:08.903Z",
+      "userName": "Samuel",
+      "projectTitle": "Samuel",
+      "department": "የእውቀት አስተዳደር",
+      "goal": "የአሰራር ስርዓት ዉጤታማነት ማሻሻል እና ተጠያቂነትን ማረጋገጥ",
+      "objectives": [
+        {
+          "objective": "አጋርነትን መመስረት እና ማሻሻል",
+          "objectiveWeight": "12.50",
+          "strategicActions": [
+            {
+              "action": "sa",
+              "weight": "67.30",
+              "metrics": [
+                {
+                  "metric": "87",
+                  "weight": "1.80",
+                  "mainTasks": [
+                    {
+                      "task": "dd",
+                      "weight": "1.80",
+                      "target": "8"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "executingBody": "የምርምር ስነምግባር ጽ/ቤት",
+          "executionTime": "2ኛ ሩብ ዓመት",
+          "budgetSource": "ግራንት",
+          "governmentBudgetAmount": "",
+          "governmentBudgetCode": "",
+          "grantBudgetAmount": "65",
+          "sdgBudgetAmount": ""
+        },
+        {
+          "objective": "የሳይንሳዊ መረጃዎች፣ የፈጠራ ፣አዳዲስ እና የተሻሻሉ ምርቶች መሳሪያዎች እና ዘዴዎች ማሳደግ፣ ማምረት እና ማሸጋገር",
+          "objectiveWeight": "87.50",
+          "strategicActions": [
+            {
+              "action": "st-g-one",
+              "weight": "28.85",
+              "metrics": [
+                {
+                  "metric": "mel-g-one",
+                  "weight": "0.52",
+                  "mainTasks": [
+                    {
+                      "task": "wan-g-one",
+                      "weight": "9.61",
+                      "target": "3"
+                    }
+                  ]
+                },
+                {
+                  "metric": "gf",
+                  "weight": "13.63",
+                  "mainTasks": [
+                    {
+                      "task": "gh",
+                      "weight": "13.63",
+                      "target": "3"
+                    },
+                    {
+                      "task": "re",
+                      "weight": "2.05",
+                      "target": "42"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "df",
+              "weight": "3.85",
+              "metrics": [
+                {
+                  "metric": "sd",
+                  "weight": "18.44",
+                  "mainTasks": [
+                    {
+                      "task": "ew",
+                      "weight": "18.44",
+                      "target": "43"
+                    }
+                  ]
+                },
+                {
+                  "metric": "df",
+                  "weight": "18.44",
+                  "mainTasks": [
+                    {
+                      "task": "g",
+                      "weight": "1.64",
+                      "target": "4"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "executingBody": "ምርምር ስልጠና ዳይሬክቶሬት",
+          "executionTime": "2ኛ ሩብ ዓመት",
+          "budgetSource": "ኢስዲጂ",
+          "governmentBudgetAmount": "",
+          "governmentBudgetCode": "",
+          "grantBudgetAmount": "",
+          "sdgBudgetAmount": "45"
+        }
+      ]
     }
   ],
   "users": [
