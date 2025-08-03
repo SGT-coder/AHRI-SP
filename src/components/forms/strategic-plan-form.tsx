@@ -386,9 +386,18 @@ const MetricsField = ({ control, objectiveIndex, actionIndex, metricIndex, remov
                         <div className="flex items-start gap-2">
                            <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.task`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">የተግባር መግለጫ</FormLabel><FormControl><Input placeholder="ዋና ተግባር ያስገቡ" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
-                         <div className="flex items-start gap-2">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                            <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.weight`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">የተግባር ክብደት (%)</FormLabel><FormControl><Input type="number" placeholder="የተግባር ክብደት (%)" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                           <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (<FormItem className="flex-1"><FormLabel className="text-xs">ዒላማ</FormLabel><FormControl><Input placeholder="የተግባር ዒላማ" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                           <FormField control={control} name={`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks.${taskIndex}.target`} render={({ field }) => (
+                               <FormItem className="flex-1">
+                                <FormLabel className="text-xs">ዒላማ (%)</FormLabel>
+                                <div className="relative">
+                                    <FormControl><Input type="number" placeholder="የተግባር ዒላማ" {...field} className="pr-8" /></FormControl>
+                                    <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">%</span>
+                                </div>
+                                <FormMessage />
+                               </FormItem>
+                            )} />
                         </div>
                           {control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks`)?.error?.root &&
                              <FormMessage>{control.getFieldState(`objectives.${objectiveIndex}.strategicActions.${actionIndex}.metrics.${metricIndex}.mainTasks`)?.error?.root?.message}</FormMessage>
