@@ -23,18 +23,6 @@ const strategicActionSchema = z.object({
     action: z.string().min(1, "የእርምጃ መግለጫ ያስፈልጋል።"),
     weight: weightSchema,
     metrics: z.array(metricSchema).min(1, "ቢያንስ አንድ መለኪያ ያስፈልጋል።"),
-}).superRefine((data, ctx) => {
-    const totalMetricsWeight = data.metrics.reduce((acc, m) => acc + (parseFloat(m.weight) || 0), 0);
-    const totalTasksWeight = data.metrics.flatMap(m => m.mainTasks).reduce((acc, t) => acc + (parseFloat(t.weight) || 0), 0);
-    const combinedWeight = totalMetricsWeight + totalTasksWeight;
-
-    if (Math.abs(combinedWeight - 100) > 0.01) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `የመለኪያዎች እና የተግባራት ክብደት ድምር ለእያንዳንዱ ስትራቴጂክ እርምጃ 100% መሆን አለበት። የአሁኑ ድምር ${combinedWeight.toFixed(2)}% ነው።`,
-            path: ['metrics'],
-        });
-    }
 });
 
 const objectiveSchema = z.object({
@@ -89,11 +77,31 @@ export const strategicPlanSchema = z.object({
     }
 
     // Validate total strategic action weights across the entire form
-    const totalStrategicActionWeight = data.objectives.flatMap(obj => obj.strategicActions).reduce((acc, action) => acc + (parseFloat(action.weight) || 0), 0);
+    const totalStrategicActionWeight = data.objectives
+        .flatMap(obj => obj.strategicActions)
+        .reduce((acc, action) => acc + (parseFloat(action.weight) || 0), 0);
     if (Math.abs(totalStrategicActionWeight - 100) > 0.01) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `የሁሉም ስትራቴጂክ እርምጃዎች ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalStrategicActionWeight.toFixed(2)}% ነው።`,
+            path: ['objectives'],
+        });
+    }
+
+    // Validate that the sum of all metric weights and all task weights across the entire form is 100
+    const totalMetricsAndTasksWeight = data.objectives
+        .flatMap(obj => obj.strategicActions)
+        .flatMap(action => action.metrics)
+        .reduce((acc, metric) => {
+            const metricWeight = parseFloat(metric.weight) || 0;
+            const tasksWeight = metric.mainTasks.reduce((taskAcc, task) => taskAcc + (parseFloat(task.weight) || 0), 0);
+            return acc + metricWeight + tasksWeight;
+        }, 0);
+        
+    if (Math.abs(totalMetricsAndTasksWeight - 100) > 0.01) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `የመለኪያና ዋና ዋና ተግባራት ክብደት ድምር 100% መሆን አለበት። የአሁኑ ድምር ${totalMetricsAndTasksWeight.toFixed(2)}% ነው።`,
             path: ['objectives'],
         });
     }
